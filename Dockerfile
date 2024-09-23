@@ -1,17 +1,11 @@
-FROM node:18-alpine
-
+FROM node:21-alpine3.20 AS builder
 WORKDIR /app
-
-COPY package.json .
-
+COPY package.json package-lock.json ./
 RUN npm install
-
-RUN npm i -g serve
-
 COPY . .
-
 RUN npm run build
 
-EXPOSE 3000
-
-CMD [ "serve", "-s", "dist" ]
+FROM busybox:1.30 AS runner
+WORKDIR /app
+COPY --from=builder /app/dist .
+CMD ["busybox", "httpd", "-f", "-v", "-p", "8080"]
