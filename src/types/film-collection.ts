@@ -1,19 +1,19 @@
 export enum FilmType {
-  black_and_white,
-  color,
-  slide,
+  black_and_white = "Black and White",
+  color = "Color",
+  slide = "Slide",
 }
 
 export enum FilmFormat {
-  _35mm,
-  _120,
+  _35mm = "35mm",
+  _120 = "120",
 }
 
 export enum FilmEvent {
-  acquired,
-  used,
-  developed,
-  received,
+  acquired = "Acquired",
+  used = "Used",
+  developed = "Developed",
+  received = "Received",
 }
 
 export type Event = {
@@ -35,4 +35,5 @@ export type FilmCollection = {
   event_log?: Event[],
   dx_code?: number,
   album_url?: string,
+  device?: string,
 }
