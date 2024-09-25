@@ -1,5 +1,5 @@
 export enum FilmType {
-  black_and_white = "Black and White",
+  black_and_white = "Black and white",
   color = "Color",
   slide = "Slide",
   polaroid = "Polaroid",
