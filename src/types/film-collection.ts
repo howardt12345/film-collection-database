@@ -10,8 +10,10 @@ export enum FilmFormat {
 }
 
 export type Event = {
+  id: string,
   date: Date,
   event: string,
+  notes: string
 }
 
 export type FilmCollection = {

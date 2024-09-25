@@ -10,12 +10,15 @@
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.45.4",
     "roboto-fontface": "*",
+    "uuid": "^10.0.0",
     "vue": "^3.4.31",
+    "vue-markdown-render": "^2.2.1",
     "vuetify": "^3.6.11"
   },
   "devDependencies": {
     "@babel/types": "^7.24.7",
     "@types/node": "^20.14.10",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-vue": "^5.0.5",
     "sass": "1.77.6",
     "typescript": "^5.4.2",

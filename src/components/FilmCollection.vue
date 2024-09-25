@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { FilmCollection, Event, FilmEvent } from "@/types/film-collection";
+import { FilmCollection, Event } from "@/types/film-collection";
 import {
   getFilmCollections,
   createFilmCollection,
@@ -25,6 +25,7 @@ const deleteDialogVisible = ref(false);
 const editingFilm = ref<FilmCollection | null>(null);
 const copyingFilm = ref<FilmCollection | null>(null);
 const filmToDelete = ref<FilmCollection | null>(null);
+const eventToDelete = ref<{ filmId: number; eventId: string } | null>(null);
 
 const uniqueNames = computed(() => [
   ...new Set(filmCollections.value.map((f) => f.name)),
@@ -34,6 +35,13 @@ const uniqueBrands = computed(() => [
 ]);
 const uniqueSources = computed(() => [
   ...new Set(filmCollections.value.map((f) => f.source).filter(Boolean)),
+]);
+const uniqueEvents = computed(() => [
+  ...new Set(
+    filmCollections.value
+      .flatMap((f) => f?.event_log?.map((e) => e.event))
+      .filter((event): event is string => Boolean(event))
+  ),
 ]);
 
 const fetchFilmCollections = async () => {
@@ -46,7 +54,7 @@ const createNewFilm = async (newFilm: FilmCollection) => {
     ...newFilm,
     event_log: [
       {
-        event: FilmEvent.acquired,
+        event: "Acquired",
         date: newFilm.date_acquired,
       } as Event,
     ],
@@ -90,6 +98,56 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
   editDialogVisible.value = false;
   editingFilm.value = null;
 };
+
+const addEventToFilm = async (filmId: number, newEvent: Event) => {
+  const film = filmCollections.value.find((f) => f.id === filmId);
+  if (film) {
+    if (!film.event_log) {
+      film.event_log = [];
+    }
+    film.event_log.push(newEvent);
+    await updateFilmCollection(filmId, film);
+  }
+};
+
+const editEvent = async (
+  filmId: number,
+  eventId: string,
+  updatedEvent: Event
+) => {
+  const film = filmCollections.value.find((f) => f.id === filmId);
+  if (film) {
+    const eventIndex = film.event_log?.findIndex((e) => e.id === eventId);
+    if (!!eventIndex && eventIndex !== -1 && film?.event_log) {
+      film.event_log[eventIndex] = updatedEvent;
+      await updateFilmCollection(filmId, film);
+    }
+  }
+};
+
+const confirmDeleteEvent = (filmId: number, eventId: string) => {
+  eventToDelete.value = { filmId, eventId };
+  deleteDialogVisible.value = true;
+};
+
+const dismissDeleteEvent = () => {
+  eventToDelete.value = null;
+  deleteDialogVisible.value = false;
+};
+
+const deleteEvent = async () => {
+  if (eventToDelete.value) {
+    const film = filmCollections.value.find((f) => f.id === eventToDelete.value!.filmId);
+    if (film) {
+      console.log(film.event_log);
+      film.event_log = film.event_log?.filter((e) => e.id !== eventToDelete.value!.eventId);
+      console.log(film.event_log);
+      await updateFilmCollection(film.id, film);
+    }
+    eventToDelete.value = null;
+    deleteDialogVisible.value = false;
+  }
+};
 </script>
 
 <template>
@@ -114,9 +172,13 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
 
     <FilmCollectionTable
       :films="filmCollections"
+      :unique-events="uniqueEvents"
       @edit="editFilm"
       @copy="copyFilm"
       @delete="confirmDeleteFilm"
+      @add-event="addEventToFilm"
+      @edit-event="editEvent"
+      @delete-event="confirmDeleteEvent"
     />
 
     <CreateFilmDialog
@@ -158,6 +220,29 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
             Cancel
           </v-btn>
           <v-btn color="red" @click="deleteFilm">Delete</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="deleteDialogVisible" max-width="500">
+      <v-card>
+        <v-card-title class="headline">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete this
+          <template v-if="eventToDelete">event</template>
+          <template v-else>film collection entry</template>?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="dismissDeleteEvent"
+            >Cancel</v-btn
+          >
+          <v-btn
+            color="red"
+            @click="eventToDelete ? deleteEvent() : deleteFilm()"
+          >
+            Delete
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
