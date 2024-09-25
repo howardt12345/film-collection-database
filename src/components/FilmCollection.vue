@@ -10,7 +10,6 @@ import {
 import FilmCollectionTable from "./FilmCollectionTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
-import EventLogDialog from "./EventLogDialog.vue";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/api/supabase";
 defineProps<{
@@ -21,13 +20,10 @@ const filmCollections = ref<FilmCollection[]>([]);
 const createDialogVisible = ref(false);
 const editDialogVisible = ref(false);
 const copyDialogVisible = ref(false);
-const eventLogDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
-const selectedFilm = ref<FilmCollection | undefined>(undefined);
 
 const editingFilm = ref<FilmCollection | null>(null);
 const copyingFilm = ref<FilmCollection | null>(null);
-const selectedItemEvents = ref<Event[] | undefined>([]);
 const filmToDelete = ref<FilmCollection | null>(null);
 
 const uniqueNames = computed(() => [
@@ -59,14 +55,14 @@ const createNewFilm = async (newFilm: FilmCollection) => {
   createDialogVisible.value = false;
 };
 
-const selectFilm = (film: FilmCollection | undefined) => {
-  console.log(film);
-  selectedFilm.value = film;
-};
-
-const editFilm = async (film: FilmCollection) => {
+const editFilm = (film: FilmCollection) => {
   editingFilm.value = { ...film };
   editDialogVisible.value = true;
+};
+
+const copyFilm = (film: FilmCollection) => {
+  copyingFilm.value = { ...film };
+  copyDialogVisible.value = true;
 };
 
 const confirmDeleteFilm = (film: FilmCollection) => {
@@ -82,13 +78,7 @@ const deleteFilm = async () => {
     );
     filmToDelete.value = null;
     deleteDialogVisible.value = false;
-    selectedFilm.value = undefined;
   }
-};
-
-const copyFilm = (film: FilmCollection) => {
-  copyingFilm.value = { ...film };
-  copyDialogVisible.value = true;
 };
 
 const saveEditedFilm = async (editedFilm: FilmCollection) => {
@@ -99,12 +89,6 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
   await updateFilmCollection(editedFilm.id, editedFilm);
   editDialogVisible.value = false;
   editingFilm.value = null;
-  selectedFilm.value = editedFilm;
-};
-
-const showEventLog = (item: FilmCollection) => {
-  selectedItemEvents.value = item.event_log || [];
-  eventLogDialogVisible.value = true;
 };
 </script>
 
@@ -115,17 +99,6 @@ const showEventLog = (item: FilmCollection) => {
         <v-btn color="primary" @click="createDialogVisible = true">
           New Film Entry
         </v-btn>
-        <div v-if="selectedFilm !== undefined" class="d-flex align-center ga-2">
-          <v-btn icon @click="editFilm(selectedFilm)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-          <v-btn icon @click="copyFilm(selectedFilm)">
-            <v-icon>mdi-content-copy</v-icon>
-          </v-btn>
-          <v-btn color="red" icon @click="confirmDeleteFilm(selectedFilm)">
-            <v-icon>mdi-delete</v-icon>
-          </v-btn>
-        </div>
       </div>
 
       <v-col class="d-flex justify-end align-center">
@@ -141,8 +114,9 @@ const showEventLog = (item: FilmCollection) => {
 
     <FilmCollectionTable
       :films="filmCollections"
-      @select="selectFilm"
-      @show-event-log="showEventLog"
+      @edit="editFilm"
+      @copy="copyFilm"
+      @delete="confirmDeleteFilm"
     />
 
     <CreateFilmDialog
@@ -170,12 +144,6 @@ const showEventLog = (item: FilmCollection) => {
       :unique-brands="uniqueBrands"
       :unique-sources="uniqueSources"
       @save="createNewFilm"
-    />
-
-    <EventLogDialog
-      v-if="eventLogDialogVisible && selectedItemEvents"
-      v-model="eventLogDialogVisible"
-      :events="selectedItemEvents"
     />
 
     <v-dialog v-model="deleteDialogVisible" max-width="500">
