@@ -2,11 +2,14 @@ export enum FilmType {
   black_and_white = "Black and White",
   color = "Color",
   slide = "Slide",
+  polaroid = "Polaroid",
+  instax = "Instax",
 }
 
 export enum FilmFormat {
   _35mm = "35mm",
   _120 = "120",
+  _600 = "600"
 }
 
 export type Event = {
