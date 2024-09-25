@@ -5,6 +5,8 @@ import { Event, FilmCollection } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
 
+type TableFilm = FilmCollection & { latest_event_date: string };
+
 const props = defineProps<{
   films: FilmCollection[];
   uniqueEvents: string[];
@@ -44,12 +46,20 @@ const getLatestEventDate = (film: FilmCollection) => {
   return latestEvent.date;
 };
 
-const sortedFilms = computed(() => {
-  return props.films.map((film) => ({
-    ...film,
-    latest_event_date: getLatestEventDate(film) || "1970-01-01", // Use a default date for sorting if no events
-  }));
+const sortedFilms = computed<TableFilm[]>(() => {
+  return props.films.map(
+    (film) =>
+      ({
+        ...film,
+        latest_event_date: getLatestEventDate(film) || "1970-01-01", // Use a default date for sorting if no events
+      } as TableFilm)
+  );
 });
+
+const getFilm = (tableFilm: TableFilm) => {
+  const { latest_event_date, ...film } = tableFilm;
+  return film;
+};
 </script>
 
 <template>
@@ -69,19 +79,19 @@ const sortedFilms = computed(() => {
           </v-btn>
         </template>
         <v-list>
-          <v-list-item @click="emit('edit', item)">
+          <v-list-item @click="emit('edit', getFilm(item))">
             <v-list-item-title>
               <v-icon>mdi-pencil</v-icon>
               <span class="ml-2">Edit</span>
             </v-list-item-title>
           </v-list-item>
-          <v-list-item @click="emit('copy', item)">
+          <v-list-item @click="emit('copy', getFilm(item))">
             <v-list-item-title>
               <v-icon>mdi-content-copy</v-icon>
               <span class="ml-2">Copy</span>
             </v-list-item-title>
           </v-list-item>
-          <v-list-item @click="emit('delete', item)">
+          <v-list-item @click="emit('delete', getFilm(item))">
             <v-list-item-title>
               <v-icon>mdi-delete</v-icon>
               <span class="ml-2">Delete</span>
