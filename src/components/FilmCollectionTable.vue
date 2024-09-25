@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import EventLogTable from "./EventLogTable.vue";
 import { Event, FilmCollection } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
 
-defineProps<{
+const props = defineProps<{
   films: FilmCollection[];
   uniqueEvents: string[];
 }>();
@@ -28,16 +28,34 @@ const filmHeaders = [
   { title: "Format", key: "film_format" },
   { title: "Type", key: "film_type" },
   { title: "Expiry Date", key: "expiry_date" },
+  { title: "Latest Event Date", key: "latest_event_date", sortable: true },
   { title: "Album URL", key: "album_url" },
 ];
 
 const expandedItem = ref(undefined);
+
+const getLatestEventDate = (film: FilmCollection) => {
+  if (!film.event_log || film.event_log.length === 0) {
+    return null;
+  }
+  const latestEvent = film.event_log.reduce((latest, current) =>
+    latest.date > current.date ? latest : current
+  );
+  return latestEvent.date;
+};
+
+const sortedFilms = computed(() => {
+  return props.films.map((film) => ({
+    ...film,
+    latest_event_date: getLatestEventDate(film) || "1970-01-01", // Use a default date for sorting if no events
+  }));
+});
 </script>
 
 <template>
   <v-data-table
     :headers="filmHeaders"
-    :items="films"
+    :items="sortedFilms"
     :sort-by="[{ key: 'date_acquired', order: 'desc' }]"
     class="elevation-1"
     show-expand
@@ -75,6 +93,12 @@ const expandedItem = ref(undefined);
 
     <template #item.album_url="{ item }">
       <a v-if="item.album_url" :href="item.album_url" target="_blank">Album</a>
+    </template>
+
+    <template #item.latest_event_date="{ item }">
+      {{
+        item.latest_event_date !== "1970-01-01" ? item.latest_event_date : "N/A"
+      }}
     </template>
 
     <template v-slot:expanded-row="{ columns, item }">
