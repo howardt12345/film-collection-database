@@ -9,16 +9,9 @@ export enum FilmFormat {
   _120 = "120",
 }
 
-export enum FilmEvent {
-  acquired = "Acquired",
-  used = "Used",
-  developed = "Developed",
-  received = "Received",
-}
-
 export type Event = {
   date: Date,
-  event: FilmEvent,
+  event: string,
 }
 
 export type FilmCollection = {
