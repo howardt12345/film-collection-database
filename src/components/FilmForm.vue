@@ -48,20 +48,20 @@ const updateField = (field: keyof FilmCollection, value: any) => {
     ></v-text-field>
     <v-select
       :model-value="film.film_format"
-      @update:model-value="updateField('film_format', $event)"
+      @update:model-value="updateField('film_format', $event as FilmFormat)"
       :items="Object.entries(FilmFormat)"
       label="Film Format"
       item-title="[1]"
-      item-value="[0]"
+      item-value="[1]"
       required
     ></v-select>
     <v-select
       :model-value="film.film_type"
-      @update:model-value="updateField('film_type', $event)"
+      @update:model-value="updateField('film_type', $event as FilmType)"
       :items="Object.entries(FilmType)"
       label="Film Type"
       item-title="[1]"
-      item-value="[0]"
+      item-value="[1]"
       required
     ></v-select>
     <v-text-field
@@ -100,5 +100,10 @@ const updateField = (field: keyof FilmCollection, value: any) => {
       @update:model-value="updateField('album_url', $event)"
       label="Album URL (Optional)"
     ></v-text-field>
+    <v-textarea
+      :model-value="film.notes"
+      @update:model-value="updateField('notes', $event)"
+      label="Notes (Optional)"
+    ></v-textarea>
   </v-form>
 </template>

@@ -3,6 +3,7 @@ import { ref } from "vue";
 import EventLogTable from "./EventLogTable.vue";
 import { Event, FilmCollection } from "@/types/film-collection";
 import { formatDate } from "@/utils";
+import VueMarkdown from "vue-markdown-render";
 
 defineProps<{
   films: FilmCollection[];
@@ -93,6 +94,14 @@ const expandedItem = ref(undefined);
               </v-col>
               <v-col cols="2">
                 <strong>Created At:</strong> {{ formatDate(item.created_at) }}
+              </v-col>
+            </v-row>
+
+            <v-row v-if="!!item.notes">
+              <v-col cols="1" />
+              <v-col cols="11">
+                <h3>Notes</h3>
+                <vue-markdown :source="item.notes" />
               </v-col>
             </v-row>
 

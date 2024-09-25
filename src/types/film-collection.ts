@@ -34,4 +34,5 @@ export type FilmCollection = {
   dx_code?: number,
   album_url?: string,
   device?: string,
+  notes?: string
 }
