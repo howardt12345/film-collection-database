@@ -16,5 +16,5 @@ while IFS= read -r line || [ -n "$line" ]; do
             sed -i "s|__${VAR_NAME}__|${VAR_VALUE}|g" "$file"
         done
     fi
-done < .env
+done < .env.production
 nginx -g "daemon off;"
