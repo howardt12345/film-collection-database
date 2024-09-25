@@ -52,7 +52,7 @@ onMounted(fetchFilmCollections);
 const createNewFilm = async (newFilm: FilmCollection) => {
   const data = await createFilmCollection({
     ...newFilm,
-    event_log: [
+    event_log: newFilm.event_log || [
       {
         event: "Acquired",
         date: newFilm.date_acquired,
@@ -137,10 +137,14 @@ const dismissDeleteEvent = () => {
 
 const deleteEvent = async () => {
   if (eventToDelete.value) {
-    const film = filmCollections.value.find((f) => f.id === eventToDelete.value!.filmId);
+    const film = filmCollections.value.find(
+      (f) => f.id === eventToDelete.value!.filmId
+    );
     if (film) {
       console.log(film.event_log);
-      film.event_log = film.event_log?.filter((e) => e.id !== eventToDelete.value!.eventId);
+      film.event_log = film.event_log?.filter(
+        (e) => e.id !== eventToDelete.value!.eventId
+      );
       console.log(film.event_log);
       await updateFilmCollection(film.id, film);
     }
@@ -234,9 +238,7 @@ const deleteEvent = async () => {
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="dismissDeleteEvent"
-            >Cancel</v-btn
-          >
+          <v-btn color="primary" @click="dismissDeleteEvent">Cancel</v-btn>
           <v-btn
             color="red"
             @click="eventToDelete ? deleteEvent() : deleteFilm()"
