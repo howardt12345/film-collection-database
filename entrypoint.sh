@@ -3,7 +3,7 @@ BUILD_DIR="/usr/share/nginx/html/assets"
 
 get_env_value() {
     local VAR_NAME="$1"
-    grep "^${VAR_NAME}=" .env | cut -d '=' -f 2-
+    grep "^${VAR_NAME}=" .env.production | cut -d '=' -f 2-
 }
 while IFS= read -r line || [ -n "$line" ]; do
     if [[ $line != \#* ]]; then
