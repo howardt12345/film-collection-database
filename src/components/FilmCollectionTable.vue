@@ -138,35 +138,42 @@ const updateUsed = (item: TableFilm, increment: number) => {
       </template>
 
       <template #item.quantity="{ item }">
-        <div class="d-flex align-center">
-          <v-btn
-            icon
-            size="x-small"
-            @click="updateUsed(item, -1)"
-            :disabled="(item.used ?? 0) <= 0"
-          >
-            <v-icon>mdi-minus</v-icon>
-          </v-btn>
-          <span
-            class="mx-2 text-no-wrap"
-            :class="
-              item.used === item.quantity
-                ? 'text-warning'
-                : item.used < item.quantity && item.used > 0
-                ? 'text-secondary'
-                : 'primary'
-            "
-            >{{ item.used }} / {{ item.quantity }}
-          </span>
-          <v-btn
-            icon
-            size="x-small"
-            @click="updateUsed(item, 1)"
-            :disabled="(item.used ?? 0) >= (item.quantity ?? 0)"
-          >
-            <v-icon>mdi-plus</v-icon>
-          </v-btn>
-        </div>
+        <v-tooltip
+          :text="`${item.quantity - (item.used ?? 0)} remaining`"
+          location="top"
+        >
+          <template v-slot:activator="{ props }">
+            <div class="d-flex align-center" v-bind="props">
+              <v-btn
+                icon
+                size="x-small"
+                @click="updateUsed(item, -1)"
+                :disabled="(item.used ?? 0) <= 0"
+              >
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+              <span
+                class="mx-2 text-no-wrap"
+                :class="
+                  item.used === item.quantity
+                    ? 'text-warning'
+                    : item.used < item.quantity && item.used > 0
+                    ? 'text-secondary'
+                    : 'primary'
+                "
+                >{{ item.used }} / {{ item.quantity }}
+              </span>
+              <v-btn
+                icon
+                size="x-small"
+                @click="updateUsed(item, 1)"
+                :disabled="(item.used ?? 0) >= (item.quantity ?? 0)"
+              >
+                <v-icon>mdi-plus</v-icon>
+              </v-btn>
+            </div>
+          </template>
+        </v-tooltip>
       </template>
 
       <template v-slot:expanded-row="{ columns, item }">
