@@ -1,24 +1,31 @@
 <script setup lang="ts">
-import { FilmCollection, FilmType, FilmFormat } from '@/types/film-collection'
+import { FilmCollection, FilmType, FilmFormat } from "@/types/film-collection";
 
 const props = defineProps<{
-  film: Partial<FilmCollection>
-  uniqueNames: string[]
-  uniqueBrands: string[]
-  uniqueSources: string[]
-}>()
+  film: Partial<FilmCollection>;
+  uniqueNames: string[];
+  uniqueBrands: string[];
+  uniqueSources: string[];
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:film', value: Partial<FilmCollection>): void
-}>()
+  (e: "update:film", value: Partial<FilmCollection>): void;
+}>();
 
 const updateField = (field: keyof FilmCollection, value: any) => {
-  emit('update:film', { ...props.film, [field]: value })
-}
+  emit("update:film", { ...props.film, [field]: value });
+};
 </script>
 
 <template>
   <v-form @submit.prevent>
+    <v-text-field
+      :model-value="film.date_acquired"
+      @update:model-value="updateField('date_acquired', $event)"
+      label="Date Acquired"
+      type="date"
+      required
+    ></v-text-field>
     <v-combobox
       :model-value="film.brand"
       @update:model-value="updateField('brand', $event)"
@@ -63,19 +70,23 @@ const updateField = (field: keyof FilmCollection, value: any) => {
       item-title="[1]"
       item-value="[1]"
       required
-    ></v-select>
-    <v-text-field
-      :model-value="film.date_acquired"
-      @update:model-value="updateField('date_acquired', $event)"
-      label="Date Acquired"
-      type="date"
+    ></v-select
+    ><v-text-field
+      :model-value="film.quantity"
+      @update:model-value="updateField('quantity', Number($event))"
+      label="Quantity"
+      type="number"
+      min="0"
       required
     ></v-text-field>
     <v-text-field
-      :model-value="film.expiry_date"
-      @update:model-value="updateField('expiry_date', $event)"
-      label="Expiry Date (YYYY-MM)"
-      type="month"
+      :model-value="film.used"
+      @update:model-value="updateField('used', Number($event))"
+      label="Used"
+      type="number"
+      min="0"
+      :max="film.quantity"
+      required
     ></v-text-field>
     <v-combobox
       :model-value="film.source"
@@ -85,6 +96,12 @@ const updateField = (field: keyof FilmCollection, value: any) => {
       clearable
       allow-new-values
     ></v-combobox>
+    <v-text-field
+      :model-value="film.expiry_date"
+      @update:model-value="updateField('expiry_date', $event)"
+      label="Expiry Date (YYYY-MM) (Optional)"
+      type="month"
+    ></v-text-field>
     <v-text-field
       :model-value="film.device"
       @update:model-value="updateField('device', $event)"
@@ -104,22 +121,6 @@ const updateField = (field: keyof FilmCollection, value: any) => {
       :model-value="film.notes"
       @update:model-value="updateField('notes', $event)"
       label="Notes (Optional)"
-    ></v-textarea>    <v-text-field
-      :model-value="film.quantity"
-      @update:model-value="updateField('quantity', Number($event))"
-      label="Quantity"
-      type="number"
-      min="0"
-      required
-    ></v-text-field>
-    <v-text-field
-      :model-value="film.used"
-      @update:model-value="updateField('used', Number($event))"
-      label="Used"
-      type="number"
-      min="0"
-      :max="film.quantity"
-      required
-    ></v-text-field>
+    ></v-textarea>
   </v-form>
 </template>

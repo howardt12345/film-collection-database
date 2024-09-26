@@ -1,9 +1,3 @@
-// Updated FilmCollection type export type FilmCollection = { id: number,
-created_at: Date, name: string, brand: string, film_type: FilmType, film_format:
-FilmFormat, iso: number, date_acquired: Date, expiry_date?: string, source:
-string, event_log?: Event[], dx_code?: string, album_url?: string, device?:
-string, notes?: string, quantity: number, used: number } // Updated
-FilmCollectionTable.vue
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import EventLogTable from "./EventLogTable.vue";
@@ -30,7 +24,7 @@ const emit = defineEmits<{
 
 const filmHeaders = [
   { title: "", key: "actions", sortable: false },
-  { title: "Quantity", key: "quantity", sortable: true },
+  { title: "Quantity", key: "used", sortable: true },
   { title: "Date Acquired", key: "date_acquired" },
   { title: "Brand", key: "brand" },
   { title: "Name", key: "name" },
@@ -137,7 +131,7 @@ const updateUsed = (item: TableFilm, increment: number) => {
         }}
       </template>
 
-      <template #item.quantity="{ item }">
+      <template #item.used="{ item }">
         <v-tooltip
           :text="`${item.quantity - (item.used ?? 0)} remaining`"
           location="top"
@@ -156,9 +150,9 @@ const updateUsed = (item: TableFilm, increment: number) => {
                 class="mx-2 text-no-wrap"
                 :class="
                   item.used === item.quantity
-                    ? 'text-warning'
+                    ? 'text-success'
                     : item.used < item.quantity && item.used > 0
-                    ? 'text-secondary'
+                    ? 'text-primary'
                     : 'primary'
                 "
                 >{{ item.used }} / {{ item.quantity }}
