@@ -104,6 +104,22 @@ const updateField = (field: keyof FilmCollection, value: any) => {
       :model-value="film.notes"
       @update:model-value="updateField('notes', $event)"
       label="Notes (Optional)"
-    ></v-textarea>
+    ></v-textarea>    <v-text-field
+      :model-value="film.quantity"
+      @update:model-value="updateField('quantity', Number($event))"
+      label="Quantity"
+      type="number"
+      min="0"
+      required
+    ></v-text-field>
+    <v-text-field
+      :model-value="film.used"
+      @update:model-value="updateField('used', Number($event))"
+      label="Used"
+      type="number"
+      min="0"
+      :max="film.quantity"
+      required
+    ></v-text-field>
   </v-form>
 </template>

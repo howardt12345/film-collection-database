@@ -35,5 +35,6 @@ export type FilmCollection = {
   album_url?: string,
   device?: string,
   notes?: string,
-  used?: boolean
+  used: number,
+  quantity: number,
 }

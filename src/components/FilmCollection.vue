@@ -99,7 +99,7 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
   editingFilm.value = null;
 };
 
-const toggleUsedStatus = async (filmId: number, used: boolean) => {
+const updateUsed = async (filmId: number, used: number) => {
   const film = filmCollections.value.find((f) => f.id === filmId);
   if (film) {
     film.used = used;
@@ -145,10 +145,14 @@ const dismissDeleteEvent = () => {
 
 const deleteEvent = async () => {
   if (eventToDelete.value) {
-    const film = filmCollections.value.find((f) => f.id === eventToDelete.value!.filmId);
+    const film = filmCollections.value.find(
+      (f) => f.id === eventToDelete.value!.filmId
+    );
     if (film) {
       console.log(film.event_log);
-      film.event_log = film.event_log?.filter((e) => e.id !== eventToDelete.value!.eventId);
+      film.event_log = film.event_log?.filter(
+        (e) => e.id !== eventToDelete.value!.eventId
+      );
       console.log(film.event_log);
       await updateFilmCollection(film.id, film);
     }
@@ -187,7 +191,7 @@ const deleteEvent = async () => {
       @add-event="addEventToFilm"
       @edit-event="editEvent"
       @delete-event="confirmDeleteEvent"
-      @toggle-used="toggleUsedStatus"
+      @update-used="updateUsed"
     />
 
     <CreateFilmDialog
@@ -243,9 +247,7 @@ const deleteEvent = async () => {
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="dismissDeleteEvent"
-            >Cancel</v-btn
-          >
+          <v-btn color="primary" @click="dismissDeleteEvent">Cancel</v-btn>
           <v-btn
             color="red"
             @click="eventToDelete ? deleteEvent() : deleteFilm()"

@@ -1,3 +1,9 @@
+// Updated FilmCollection type export type FilmCollection = { id: number,
+created_at: Date, name: string, brand: string, film_type: FilmType, film_format:
+FilmFormat, iso: number, date_acquired: Date, expiry_date?: string, source:
+string, event_log?: Event[], dx_code?: string, album_url?: string, device?:
+string, notes?: string, quantity: number, used: number } // Updated
+FilmCollectionTable.vue
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import EventLogTable from "./EventLogTable.vue";
@@ -19,12 +25,12 @@ const emit = defineEmits<{
   (e: "addEvent", filmId: number, event: Event): void;
   (e: "editEvent", filmId: number, eventId: string, updatedEvent: Event): void;
   (e: "deleteEvent", filmId: number, eventId: string): void;
-  (e: "toggleUsed", filmId: number, used: boolean): void;
+  (e: "updateUsed", filmId: number, used: number): void;
 }>();
 
 const filmHeaders = [
   { title: "", key: "actions", sortable: false },
-  { title: "Used", key: "used", sortable: true },
+  { title: "Quantity", key: "quantity", sortable: true },
   { title: "Date Acquired", key: "date_acquired" },
   { title: "Brand", key: "brand" },
   { title: "Name", key: "name" },
@@ -53,7 +59,7 @@ const sortedFilms = computed<TableFilm[]>(() => {
     (film) =>
       ({
         ...film,
-        latest_event_date: getLatestEventDate(film) || "1970-01-01", // Use a default date for sorting if no events
+        latest_event_date: getLatestEventDate(film) || "1970-01-01",
       } as TableFilm)
   );
 });
@@ -63,8 +69,12 @@ const getFilm = (tableFilm: TableFilm) => {
   return film;
 };
 
-const toggleUsed = (item: TableFilm) => {
-  emit("toggleUsed", item.id, !item.used);
+const updateUsed = (item: TableFilm, increment: number) => {
+  const newUsed = Math.max(
+    0,
+    Math.min(item.quantity ?? 0, (item.used ?? 0) + increment)
+  );
+  emit("updateUsed", item.id, newUsed);
 };
 </script>
 
@@ -127,13 +137,36 @@ const toggleUsed = (item: TableFilm) => {
         }}
       </template>
 
-      <template #item.used="{ item }">
-        <v-checkbox
-          :model-value="item.used"
-          @change="toggleUsed(item)"
-          hide-details
-          dense
-        ></v-checkbox>
+      <template #item.quantity="{ item }">
+        <div class="d-flex align-center">
+          <v-btn
+            icon
+            size="x-small"
+            @click="updateUsed(item, -1)"
+            :disabled="(item.used ?? 0) <= 0"
+          >
+            <v-icon>mdi-minus</v-icon>
+          </v-btn>
+          <span
+            class="mx-2 text-no-wrap"
+            :class="
+              item.used === item.quantity
+                ? 'text-warning'
+                : item.used < item.quantity && item.used > 0
+                ? 'text-secondary'
+                : 'primary'
+            "
+            >{{ item.used }} / {{ item.quantity }}
+          </span>
+          <v-btn
+            icon
+            size="x-small"
+            @click="updateUsed(item, 1)"
+            :disabled="(item.used ?? 0) >= (item.quantity ?? 0)"
+          >
+            <v-icon>mdi-plus</v-icon>
+          </v-btn>
+        </div>
       </template>
 
       <template v-slot:expanded-row="{ columns, item }">
@@ -141,7 +174,20 @@ const toggleUsed = (item: TableFilm) => {
           <td :colspan="columns.length">
             <v-container>
               <v-row>
-                <v-col cols="1" />
+                <v-col cols="1">
+                  <!-- Album URL Icon Button -->
+                  <v-btn
+                    v-if="item.album_url"
+                    :href="item.album_url"
+                    target="_blank"
+                    icon
+                    variant="outlined"
+                    size="small"
+                    elevation="0"
+                  >
+                    <v-icon>mdi-album</v-icon>
+                  </v-btn>
+                </v-col>
                 <v-col cols="3">
                   <strong>Source:</strong> {{ item.source }}
                 </v-col>
@@ -161,14 +207,6 @@ const toggleUsed = (item: TableFilm) => {
                 <v-col cols="11">
                   <h3>Notes</h3>
                   <vue-markdown :source="item.notes" />
-                </v-col>
-              </v-row>
-
-              <v-row v-if="!!item.album_url">
-                <v-col cols="1" />
-                <v-col cols="11">
-                  <h3>Album URL</h3>
-                  <a :href="item.album_url" target="_blank">Album</a>
                 </v-col>
               </v-row>
 
