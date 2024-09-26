@@ -99,6 +99,14 @@ const saveEditedFilm = async (editedFilm: FilmCollection) => {
   editingFilm.value = null;
 };
 
+const toggleUsedStatus = async (filmId: number, used: boolean) => {
+  const film = filmCollections.value.find((f) => f.id === filmId);
+  if (film) {
+    film.used = used;
+    await updateFilmCollection(filmId, film);
+  }
+};
+
 const addEventToFilm = async (filmId: number, newEvent: Event) => {
   const film = filmCollections.value.find((f) => f.id === filmId);
   if (film) {
@@ -179,6 +187,7 @@ const deleteEvent = async () => {
       @add-event="addEventToFilm"
       @edit-event="editEvent"
       @delete-event="confirmDeleteEvent"
+      @toggle-used="toggleUsedStatus"
     />
 
     <CreateFilmDialog

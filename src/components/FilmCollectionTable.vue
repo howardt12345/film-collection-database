@@ -19,10 +19,12 @@ const emit = defineEmits<{
   (e: "addEvent", filmId: number, event: Event): void;
   (e: "editEvent", filmId: number, eventId: string, updatedEvent: Event): void;
   (e: "deleteEvent", filmId: number, eventId: string): void;
+  (e: "toggleUsed", filmId: number, used: boolean): void;
 }>();
 
 const filmHeaders = [
   { title: "", key: "actions", sortable: false },
+  { title: "Used", key: "used", sortable: true },
   { title: "Date Acquired", key: "date_acquired" },
   { title: "Brand", key: "brand" },
   { title: "Name", key: "name" },
@@ -59,6 +61,10 @@ const sortedFilms = computed<TableFilm[]>(() => {
 const getFilm = (tableFilm: TableFilm) => {
   const { latest_event_date, ...film } = tableFilm;
   return film;
+};
+
+const toggleUsed = (item: TableFilm) => {
+  emit('toggleUsed', item.id, !item.used);
 };
 </script>
 
@@ -109,6 +115,15 @@ const getFilm = (tableFilm: TableFilm) => {
       {{
         item.latest_event_date !== "1970-01-01" ? item.latest_event_date : "N/A"
       }}
+    </template>
+
+    <template #item.used="{ item }">
+      <v-checkbox
+        :model-value="item.used"
+        @change="toggleUsed(item)"
+        hide-details
+        dense
+      ></v-checkbox>
     </template>
 
     <template v-slot:expanded-row="{ columns, item }">

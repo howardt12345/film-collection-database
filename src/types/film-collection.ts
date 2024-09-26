@@ -31,8 +31,9 @@ export type FilmCollection = {
   expiry_date?: string,
   source: string,
   event_log?: Event[],
-  dx_code?: number,
+  dx_code?: string,
   album_url?: string,
   device?: string,
-  notes?: string
+  notes?: string,
+  used?: boolean
 }
