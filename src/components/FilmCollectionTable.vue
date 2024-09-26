@@ -4,6 +4,12 @@ import EventLogTable from "./EventLogTable.vue";
 import { Event, FilmCollection } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
+import {
+  differenceInMonths,
+  isBefore,
+  isAfter,
+  subYears,
+} from "date-fns"; // Import date-fns for date comparison
 
 type TableFilm = FilmCollection & { latest_event_date: string };
 
@@ -70,6 +76,58 @@ const updateUsed = (item: TableFilm, increment: number) => {
   );
   emit("updateUsed", item.id, newUsed);
 };
+
+// Function to get the number of months until the expiry date
+const getExpiryStatus = (expiryDate: string | undefined) => {
+  if (!expiryDate) {
+    return "Unknown expiry date";
+  }
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const monthsDiff = differenceInMonths(expiry, now);
+
+  if (monthsDiff > 12) {
+    const yearsDiff = Math.floor(monthsDiff / 12);
+    return `${yearsDiff} year${yearsDiff > 1 ? "s" : ""} left`;
+  } else if (monthsDiff > 1) {
+    return `${monthsDiff} months left`;
+  } else if (monthsDiff === 1) {
+    return "1 month left";
+  } else if (monthsDiff === 0) {
+    return "Expires this month";
+  } else {
+    const pastMonths = Math.abs(monthsDiff);
+    if (pastMonths > 12) {
+      const pastYears = Math.floor(pastMonths / 12);
+      return `Expired ${pastYears} year${pastYears > 1 ? "s" : ""} ago`;
+    } else if (pastMonths === 1) {
+      return `Expired 1 month ago`;
+    } else {
+      return `Expired ${pastMonths} months ago`;
+    }
+  }
+};
+
+// Function to determine the CSS class based on the expiry date
+const getExpiryDateClass = (expiryDate: string | undefined) => {
+  if (!expiryDate) {
+    return "text-error"; // No expiry date -> text-error
+  }
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+
+  if (isAfter(expiry, now)) {
+    // Expiry date is in the future
+    if (differenceInMonths(expiry, now) <= 1) {
+      return "text-primary"; // Expiry date is in the current month
+    }
+    return "text-secondary"; // Expiry date is in the future, not in the current month
+  } else {
+    // Expiry date is in the past
+    const tenYearsAgo = subYears(now, 10);
+    return isBefore(expiry, tenYearsAgo) ? "text-error" : "text-warning"; // More than 10 years ago -> text-error, otherwise text-warning
+  }
+};
 </script>
 
 <template>
@@ -121,6 +179,21 @@ const updateUsed = (item: TableFilm, increment: number) => {
             </v-list-item>
           </v-list>
         </v-menu>
+      </template>
+
+      <template #item.expiry_date="{ item }">
+        <v-tooltip
+          :text="getExpiryStatus(item.expiry_date)"
+          location="top"
+        >
+          <template v-slot:activator="{ props }">
+            <span
+              :class="getExpiryDateClass(item.expiry_date)"
+              v-bind="props"
+              >{{ item.expiry_date || "N/A" }}</span
+            >
+          </template>
+        </v-tooltip>
       </template>
 
       <template #item.latest_event_date="{ item }">
