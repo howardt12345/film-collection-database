@@ -8,6 +8,7 @@ RUN npm run production
 
 # Setup the Nginx server
 FROM nginx:alpine
+RUN apk add --no-cache bash  # Install bash
 WORKDIR /usr/share/nginx/html
 COPY --from=build /app/dist .
 COPY --from=build /app/.env.production .
