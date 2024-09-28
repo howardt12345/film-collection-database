@@ -9,6 +9,8 @@ import {
   isBefore,
   isAfter,
   subYears,
+  subMonths,
+  addMonths,
 } from "date-fns"; // Import date-fns for date comparison
 
 type TableFilm = FilmCollection & { latest_event_date: string };
@@ -113,21 +115,29 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
   if (!expiryDate) {
     return "text-error"; // No expiry date -> text-error
   }
+
   const now = new Date();
   const expiry = new Date(expiryDate);
 
+  // Calculate the range 6 months before and after the current date
+  const sixMonthsBefore = subMonths(now, 6);
+  const sixMonthsAfter = addMonths(now, 6);
+
+  // Check if the expiry date is within 6 months before or after the current date
+  if (isAfter(expiry, sixMonthsBefore) && isBefore(expiry, sixMonthsAfter)) {
+    return "text-primary"; // Expiry date is within 6 months of the current date
+  }
+
   if (isAfter(expiry, now)) {
-    // Expiry date is in the future
-    if (differenceInMonths(expiry, now) <= 1) {
-      return "text-primary"; // Expiry date is in the current month
-    }
-    return "text-secondary"; // Expiry date is in the future, not in the current month
+    // Expiry date is in the future but not within 6 months
+    return "text-secondary"; // Expiry date is in the future
   } else {
-    // Expiry date is in the past
+    // Expiry date is in the past but not within 6 months
     const tenYearsAgo = subYears(now, 10);
     return isBefore(expiry, tenYearsAgo) ? "text-error" : "text-warning"; // More than 10 years ago -> text-error, otherwise text-warning
   }
 };
+
 </script>
 
 <template>
