@@ -27,22 +27,47 @@ const copyingFilm = ref<FilmCollection | null>(null);
 const filmToDelete = ref<FilmCollection | null>(null);
 const eventToDelete = ref<{ filmId: number; eventId: string } | null>(null);
 
-const uniqueNames = computed(() => [
-  ...new Set(filmCollections.value.map((f) => f.name)),
-]);
-const uniqueBrands = computed(() => [
-  ...new Set(filmCollections.value.map((f) => f.brand)),
-]);
-const uniqueSources = computed(() => [
-  ...new Set(filmCollections.value.map((f) => f.source).filter(Boolean)),
-]);
-const uniqueEvents = computed(() => [
-  ...new Set(
-    filmCollections.value
-      .flatMap((f) => f?.event_log?.map((e) => e.event))
-      .filter((event): event is string => Boolean(event))
-  ),
-]);
+const uniqueNames = computed(() => {
+  const nameFrequency = filmCollections.value.reduce((acc: Record<string, number>, film) => {
+    acc[film.name] = (acc[film.name] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return Object.keys(nameFrequency).sort((a, b) => nameFrequency[b] - nameFrequency[a]);
+});
+
+const uniqueBrands = computed(() => {
+  const brandFrequency = filmCollections.value.reduce((acc: Record<string, number>, film) => {
+    acc[film.brand] = (acc[film.brand] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return Object.keys(brandFrequency).sort((a, b) => brandFrequency[b] - brandFrequency[a]);
+});
+
+const uniqueSources = computed(() => {
+  const sourceFrequency = filmCollections.value
+    .filter(film => film.source) // Filter out falsy sources
+    .reduce((acc: Record<string, number>, film) => {
+      acc[film.source] = (acc[film.source] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+  return Object.keys(sourceFrequency).sort((a, b) => sourceFrequency[b] - sourceFrequency[a]);
+});
+
+const uniqueEvents = computed(() => {
+  const eventFrequency = filmCollections.value
+    .flatMap(film => film?.event_log?.map(event => event.event) || [])
+    .filter(Boolean) // Remove falsy values
+    .reduce((acc: Record<string, number>, event) => {
+      acc[event] = (acc[event] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+  return Object.keys(eventFrequency).sort((a, b) => eventFrequency[b] - eventFrequency[a]);
+});
+
 
 const fetchFilmCollections = async () => {
   filmCollections.value = await getFilmCollections();
