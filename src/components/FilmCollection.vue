@@ -10,11 +10,6 @@ import {
 import FilmCollectionTable from "./FilmCollectionTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
-import { Session } from "@supabase/supabase-js";
-import { supabase } from "@/api/supabase";
-defineProps<{
-  session: Session | null;
-}>();
 
 const filmCollections = ref<FilmCollection[]>([]);
 const createDialogVisible = ref(false);
@@ -28,46 +23,59 @@ const filmToDelete = ref<FilmCollection | null>(null);
 const eventToDelete = ref<{ filmId: number; eventId: string } | null>(null);
 
 const uniqueNames = computed(() => {
-  const nameFrequency = filmCollections.value.reduce((acc: Record<string, number>, film) => {
-    acc[film.name] = (acc[film.name] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const nameFrequency = filmCollections.value.reduce(
+    (acc: Record<string, number>, film) => {
+      acc[film.name] = (acc[film.name] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
-  return Object.keys(nameFrequency).sort((a, b) => nameFrequency[b] - nameFrequency[a]);
+  return Object.keys(nameFrequency).sort(
+    (a, b) => nameFrequency[b] - nameFrequency[a]
+  );
 });
 
 const uniqueBrands = computed(() => {
-  const brandFrequency = filmCollections.value.reduce((acc: Record<string, number>, film) => {
-    acc[film.brand] = (acc[film.brand] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const brandFrequency = filmCollections.value.reduce(
+    (acc: Record<string, number>, film) => {
+      acc[film.brand] = (acc[film.brand] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
-  return Object.keys(brandFrequency).sort((a, b) => brandFrequency[b] - brandFrequency[a]);
+  return Object.keys(brandFrequency).sort(
+    (a, b) => brandFrequency[b] - brandFrequency[a]
+  );
 });
 
 const uniqueSources = computed(() => {
   const sourceFrequency = filmCollections.value
-    .filter(film => film.source) // Filter out falsy sources
+    .filter((film) => film.source) // Filter out falsy sources
     .reduce((acc: Record<string, number>, film) => {
       acc[film.source] = (acc[film.source] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-  return Object.keys(sourceFrequency).sort((a, b) => sourceFrequency[b] - sourceFrequency[a]);
+  return Object.keys(sourceFrequency).sort(
+    (a, b) => sourceFrequency[b] - sourceFrequency[a]
+  );
 });
 
 const uniqueEvents = computed(() => {
   const eventFrequency = filmCollections.value
-    .flatMap(film => film?.event_log?.map(event => event.event) || [])
+    .flatMap((film) => film?.event_log?.map((event) => event.event) || [])
     .filter(Boolean) // Remove falsy values
     .reduce((acc: Record<string, number>, event) => {
       acc[event] = (acc[event] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-  return Object.keys(eventFrequency).sort((a, b) => eventFrequency[b] - eventFrequency[a]);
+  return Object.keys(eventFrequency).sort(
+    (a, b) => eventFrequency[b] - eventFrequency[a]
+  );
 });
-
 
 const fetchFilmCollections = async () => {
   filmCollections.value = await getFilmCollections();
@@ -189,23 +197,11 @@ const deleteEvent = async () => {
 
 <template>
   <v-container>
-    <v-row class="ma-2 mb-4">
-      <div class="d-flex align-center ga-4">
-        <v-btn color="primary" @click="createDialogVisible = true">
-          New Film Entry
-        </v-btn>
-      </div>
-
-      <v-col class="d-flex justify-end align-center">
-        <span class="mr-4">{{ session?.user.email }}</span>
-        <v-btn
-          density="comfortable"
-          color="primary"
-          icon="mdi-logout"
-          @click="supabase.auth.signOut()"
-        />
-      </v-col>
-    </v-row>
+    <div class="d-flex align-center ga-4 mb-2">
+      <v-btn color="primary" @click="createDialogVisible = true">
+        New Film Entry
+      </v-btn>
+    </div>
 
     <FilmCollectionTable
       :films="filmCollections"
