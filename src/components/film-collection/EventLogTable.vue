@@ -1,55 +1,51 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { v4 as uuid } from "uuid";
 import VueMarkdown from "vue-markdown-render";
-import { FilmEntry, Event } from "@/types/film-collection";
-import { getSortedEventLog } from "@/utils";
+import { Event } from "@/types/film-collection";
 
 const props = defineProps<{
-  film: FilmEntry;
+  events: Event[];
   uniqueEvents: string[];
 }>();
 
 const emit = defineEmits<{
-  (e: "addEvent", event: Event): void;
-  (e: "editEvent", eventId: string, updatedEvent: Event): void;
-  (e: "deleteEvent", eventId: string): void;
+  (e: "addEvent", event: Omit<Event, "id">): void;
+  (e: "editEvent", eventId: number, updatedEvent: Event): void;
+  (e: "deleteEvent", eventId: number): void;
 }>();
 
 const eventHeaders = [
   { title: "Date", key: "date", sortable: true, width: "27%" },
-  { title: "Event", key: "event", sortable: true, width: "25%" },
+  { title: "Event", key: "event_type", sortable: true, width: "25%" },
   { title: "Notes", key: "notes", sortable: false, width: "auto" },
   { title: "Actions", key: "actions", sortable: false, width: "15%" },
 ];
 
-const newEvent = ref<Event>({
-  id: uuid(),
-  event: "",
+const newEvent = ref<Omit<Event, "id">>({
+  event_type: "",
   date: new Date(),
   notes: "",
 });
 
-const editingEvent = ref<string | null>(null);
+const editingEvent = ref<number | null>(null);
 
 const addEvent = () => {
-  if (newEvent.value.event && newEvent.value.date) {
+  if (newEvent.value.event_type && newEvent.value.date) {
     emit("addEvent", { ...newEvent.value });
     newEvent.value = {
-      id: uuid(),
-      event: "",
+      event_type: "",
       date: new Date(),
       notes: "",
     };
   }
 };
 
-const startEditEvent = (eventId: string) => {
+const startEditEvent = (eventId: number) => {
   editingEvent.value = eventId;
 };
 
-const saveEditEvent = (eventId: string) => {
-  const updatedEvent = props.film.event_log!.find((e) => e.id === eventId);
+const saveEditEvent = (eventId: number) => {
+  const updatedEvent = props.events.find((e) => e.id === eventId);
   if (updatedEvent) {
     emit("editEvent", eventId, updatedEvent);
     editingEvent.value = null;
@@ -60,17 +56,21 @@ const cancelEditEvent = () => {
   editingEvent.value = null;
 };
 
-const deleteEvent = (eventId: string) => {
+const deleteEvent = (eventId: number) => {
   emit("deleteEvent", eventId);
 };
 
-const sortedEventLog = computed(() => getSortedEventLog(props.film.event_log));
+const sortedEvents = computed(() =>
+  [...props.events].sort((a, b) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
+);
 </script>
 
 <template>
   <v-data-table
     :headers="eventHeaders"
-    :items="sortedEventLog"
+    :items="sortedEvents"
     class="elevation-1"
     items-per-page="5"
   >
@@ -86,7 +86,7 @@ const sortedEventLog = computed(() => getSortedEventLog(props.film.event_log));
         </v-col>
         <v-col cols="3">
           <v-combobox
-            v-model="newEvent.event"
+            v-model="newEvent.event_type"
             :items="uniqueEvents"
             label="Event Type"
             density="comfortable"
@@ -104,7 +104,7 @@ const sortedEventLog = computed(() => getSortedEventLog(props.film.event_log));
           <v-btn
             color="primary"
             @click="addEvent"
-            :disabled="!newEvent.event || !newEvent.date"
+            :disabled="!newEvent.event_type || !newEvent.date"
           >
             Add Event
           </v-btn>
@@ -130,13 +130,13 @@ const sortedEventLog = computed(() => getSortedEventLog(props.film.event_log));
         <td>
           <div v-if="editingEvent === event.id" class="pt-4">
             <v-combobox
-              v-model="event.event"
+              v-model="event.event_type"
               :items="uniqueEvents"
               density="compact"
             ></v-combobox>
           </div>
           <template v-else>
-            {{ event.event }}
+            {{ event.event_type }}
           </template>
         </td>
 
@@ -176,7 +176,6 @@ const sortedEventLog = computed(() => getSortedEventLog(props.film.event_log));
             >
               <v-icon>mdi-pencil</v-icon>
             </v-btn>
-
             <v-btn
               icon
               @click="deleteEvent(event.id)"

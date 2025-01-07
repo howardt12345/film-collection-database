@@ -11,13 +11,12 @@ import {
   subYears,
   subMonths,
   addMonths,
-} from "date-fns"; // Import date-fns for date comparison
-
-type TableFilm = FilmEntry & { latest_event_date: string };
+} from "date-fns";
 
 const props = defineProps<{
   films: FilmEntry[];
   uniqueEvents: string[];
+  eventsByFilm: Record<number, Event[]>;
 }>();
 
 const emit = defineEmits<{
@@ -25,9 +24,10 @@ const emit = defineEmits<{
   (e: "copy", film: FilmEntry): void;
   (e: "delete", film: FilmEntry): void;
   (e: "addEvent", filmId: number, event: Event): void;
-  (e: "editEvent", filmId: number, eventId: string, updatedEvent: Event): void;
-  (e: "deleteEvent", filmId: number, eventId: string): void;
+  (e: "editEvent", filmId: number, eventId: number, updatedEvent: Event): void;
+  (e: "deleteEvent", filmId: number, eventId: number): void;
   (e: "updateUsed", filmId: number, used: number): void;
+  (e: "fetchEvents", filmId: number): void;
 }>();
 
 const filmHeaders = [
@@ -40,38 +40,23 @@ const filmHeaders = [
   { title: "Format", key: "film_format" },
   { title: "Type", key: "film_type" },
   { title: "Expiry Date", key: "expiry_date" },
-  { title: "Latest Event Date", key: "latest_event_date", sortable: true },
+  { title: "Latest Event Date", key: "latest_event.date", sortable: true },
 ];
 
-const expandedItem = ref(undefined);
 const search = ref("");
 
-const getLatestEventDate = (film: FilmEntry) => {
-  if (!film.event_log || film.event_log.length === 0) {
-    return null;
+const expandedItem = ref<number[]>([]);
+
+const handleExpand = async (expanded: number[]) => {
+  if (!expanded || expanded.length === 0) return;
+
+  const itemId = expanded[expanded.length - 1];
+  if (itemId && !props.eventsByFilm[itemId]) {
+    emit('fetchEvents', itemId);
   }
-  const latestEvent = film.event_log.reduce((latest, current) =>
-    latest.date > current.date ? latest : current
-  );
-  return latestEvent.date;
 };
 
-const sortedFilms = computed<TableFilm[]>(() => {
-  return props.films.map(
-    (film) =>
-      ({
-        ...film,
-        latest_event_date: getLatestEventDate(film) || "1970-01-01",
-      } as TableFilm)
-  );
-});
-
-const getFilm = (tableFilm: TableFilm) => {
-  const { latest_event_date, ...film } = tableFilm;
-  return film;
-};
-
-const updateUsed = (item: TableFilm, increment: number) => {
+const updateUsed = (item: FilmEntry, increment: number) => {
   const newUsed = Math.max(
     0,
     Math.min(item.quantity ?? 0, (item.used ?? 0) + increment)
@@ -210,11 +195,12 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
     </template>
     <v-data-table
       :headers="filmHeaders"
-      :items="sortedFilms"
+      :items="films"
       :sort-by="[{ key: 'date_acquired', order: 'desc' }]"
       class="elevation-1"
       show-expand
       v-model:expanded="expandedItem"
+      @update:expanded="handleExpand"
       :search="search"
     >
       <template #item.actions="{ item }">
@@ -225,19 +211,19 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
             </v-btn>
           </template>
           <v-list>
-            <v-list-item @click="emit('edit', getFilm(item))">
+            <v-list-item @click="emit('edit', item)">
               <v-list-item-title>
                 <v-icon>mdi-pencil</v-icon>
                 <span class="ml-2">Edit</span>
               </v-list-item-title>
             </v-list-item>
-            <v-list-item @click="emit('copy', getFilm(item))">
+            <v-list-item @click="emit('copy', item)">
               <v-list-item-title>
                 <v-icon>mdi-content-copy</v-icon>
                 <span class="ml-2">Copy</span>
               </v-list-item-title>
             </v-list-item>
-            <v-list-item @click="emit('delete', getFilm(item))">
+            <v-list-item @click="emit('delete', item)">
               <v-list-item-title>
                 <v-icon>mdi-delete</v-icon>
                 <span class="ml-2">Delete</span>
@@ -245,6 +231,10 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
             </v-list-item>
           </v-list>
         </v-menu>
+      </template>
+
+      <template #item.date_acquired="{ item }">
+        {{ formatDate(item.date_acquired) }}
       </template>
 
       <template #item.brand="{ item }">
@@ -282,12 +272,8 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
         </v-tooltip>
       </template>
 
-      <template #item.latest_event_date="{ item }">
-        {{
-          item.latest_event_date !== "1970-01-01"
-            ? item.latest_event_date
-            : "N/A"
-        }}
+      <template #item.latest_event.date="{ item }">
+        {{ formatDate(item.latest_event?.date) || "N/A" }}
       </template>
 
       <template #item.used="{ item }">
@@ -375,16 +361,12 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
                 <v-col cols="11">
                   <h3>Event Log</h3>
                   <EventLogTable
-                    :film="item"
+                    :events="eventsByFilm[item.id] || []"
                     :unique-events="uniqueEvents"
                     @add-event="(event: Event) => emit('addEvent', item.id, event)"
-                    @edit-event="
-                    (eventId: string, updatedEvent: Event) =>
-                      emit('editEvent', item.id, eventId, updatedEvent)
-                  "
-                    @delete-event="
-                    (eventId: string) => emit('deleteEvent', item.id, eventId)
-                  "
+                    @edit-event="(eventId: number, updatedEvent: Event) =>
+                      emit('editEvent', item.id, eventId, updatedEvent)"
+                    @delete-event="(eventId: number) => emit('deleteEvent', item.id, eventId)"
                   />
                 </v-col>
               </v-row>

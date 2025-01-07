@@ -6,12 +6,17 @@ import {
   createFilmCollection,
   updateFilmCollection,
   deleteFilmCollection,
+  getFilmEvents,
+  createFilmEvent,
+  updateEvent,
+  deleteFilmEvent,
 } from "@/api/film-collection";
 import FilmCollectionTable from "./FilmCollectionTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
+const eventsByFilm = ref<Record<number, Event[]>>({});
 const createDialogVisible = ref(false);
 const editDialogVisible = ref(false);
 const copyDialogVisible = ref(false);
@@ -20,7 +25,7 @@ const deleteDialogVisible = ref(false);
 const editingFilm = ref<FilmEntry | null>(null);
 const copyingFilm = ref<FilmEntry | null>(null);
 const filmToDelete = ref<FilmEntry | null>(null);
-const eventToDelete = ref<{ filmId: number; eventId: string } | null>(null);
+const eventToDelete = ref<{ filmId: number; eventId: number } | null>(null);
 
 const uniqueNames = computed(() => {
   const nameFrequency = filmCollections.value.reduce(
@@ -30,10 +35,7 @@ const uniqueNames = computed(() => {
     },
     {} as Record<string, number>
   );
-
-  return Object.keys(nameFrequency).sort(
-    (a, b) => nameFrequency[b] - nameFrequency[a]
-  );
+  return Object.keys(nameFrequency).sort((a, b) => nameFrequency[b] - nameFrequency[a]);
 });
 
 const uniqueBrands = computed(() => {
@@ -44,53 +46,44 @@ const uniqueBrands = computed(() => {
     },
     {} as Record<string, number>
   );
-
-  return Object.keys(brandFrequency).sort(
-    (a, b) => brandFrequency[b] - brandFrequency[a]
-  );
+  return Object.keys(brandFrequency).sort((a, b) => brandFrequency[b] - brandFrequency[a]);
 });
 
 const uniqueSources = computed(() => {
   const sourceFrequency = filmCollections.value
-    .filter((film) => film.source) // Filter out falsy sources
+    .filter((film) => film.source)
     .reduce((acc: Record<string, number>, film) => {
       acc[film.source] = (acc[film.source] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-
-  return Object.keys(sourceFrequency).sort(
-    (a, b) => sourceFrequency[b] - sourceFrequency[a]
-  );
+  return Object.keys(sourceFrequency).sort((a, b) => sourceFrequency[b] - sourceFrequency[a]);
 });
 
 const uniqueEvents = computed(() => {
-  const eventFrequency = filmCollections.value
-    .flatMap((film) => film?.event_log?.map((event) => event.event) || [])
-    .filter(Boolean) // Remove falsy values
-    .reduce((acc: Record<string, number>, event) => {
-      acc[event] = (acc[event] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-  return Object.keys(eventFrequency).sort(
-    (a, b) => eventFrequency[b] - eventFrequency[a]
-  );
+  const eventTypes = new Set<string>();
+  Object.values(eventsByFilm.value).forEach(events => {
+    events.forEach(event => eventTypes.add(event.event_type));
+  });
+  return Array.from(eventTypes);
 });
 
 const fetchFilmCollections = async () => {
   filmCollections.value = await getFilmCollections();
 };
+
+const handleFetchEvents = async (filmId: number) => {
+  const events = await getFilmEvents(filmId);
+  eventsByFilm.value[filmId] = events;
+};
+
 onMounted(fetchFilmCollections);
 
 const createNewFilm = async (newFilm: FilmEntry) => {
-  const data = await createFilmCollection({
-    ...newFilm,
-    event_log: [
-      {
-        event: "Acquired",
-        date: newFilm.date_acquired,
-      } as Event,
-    ],
+  const data = await createFilmCollection(newFilm);
+  await createFilmEvent(data.id, {
+    date: newFilm.date_acquired,
+    event_type: "Acquired",
+    notes: ""
   });
   filmCollections.value.push(data);
   createDialogVisible.value = false;
@@ -136,37 +129,27 @@ const updateUsed = async (filmId: number, used: number) => {
   const film = filmCollections.value.find((f) => f.id === filmId);
   if (film) {
     film.used = used;
-    await updateFilmCollection(filmId, film);
+    await updateFilmCollection(filmId, { used });
   }
 };
 
-const addEventToFilm = async (filmId: number, newEvent: Event) => {
-  const film = filmCollections.value.find((f) => f.id === filmId);
-  if (film) {
-    if (!film.event_log) {
-      film.event_log = [];
-    }
-    film.event_log.push(newEvent);
-    await updateFilmCollection(filmId, film);
+const addEventToFilm = async (filmId: number, newEvent: Omit<Event, "id">) => {
+  const event = await createFilmEvent(filmId, newEvent);
+  if (!eventsByFilm.value[filmId]) {
+    eventsByFilm.value[filmId] = [];
+  }
+  eventsByFilm.value[filmId].push(event);
+};
+
+const editEvent = async (filmId: number, eventId: number, updatedEvent: Event) => {
+  await updateEvent(filmId, eventId, updatedEvent);
+  const eventIndex = eventsByFilm.value[filmId]?.findIndex(e => e.id === eventId);
+  if (eventIndex !== undefined && eventIndex !== -1) {
+    eventsByFilm.value[filmId][eventIndex] = updatedEvent;
   }
 };
 
-const editEvent = async (
-  filmId: number,
-  eventId: string,
-  updatedEvent: Event
-) => {
-  const film = filmCollections.value.find((f) => f.id === filmId);
-  if (film) {
-    const eventIndex = film.event_log?.findIndex((e) => e.id === eventId);
-    if (!!eventIndex && eventIndex !== -1 && film?.event_log) {
-      film.event_log[eventIndex] = updatedEvent;
-      await updateFilmCollection(filmId, film);
-    }
-  }
-};
-
-const confirmDeleteEvent = (filmId: number, eventId: string) => {
+const confirmDeleteEvent = (filmId: number, eventId: number) => {
   eventToDelete.value = { filmId, eventId };
   deleteDialogVisible.value = true;
 };
@@ -178,17 +161,11 @@ const dismissDeleteEvent = () => {
 
 const deleteEvent = async () => {
   if (eventToDelete.value) {
-    const film = filmCollections.value.find(
-      (f) => f.id === eventToDelete.value!.filmId
-    );
-    if (film) {
-      console.log(film.event_log);
-      film.event_log = film.event_log?.filter(
-        (e) => e.id !== eventToDelete.value!.eventId
-      );
-      console.log(film.event_log);
-      await updateFilmCollection(film.id, film);
-    }
+    const { filmId, eventId } = eventToDelete.value;
+    await deleteFilmEvent(filmId, eventId);
+    eventsByFilm.value[filmId] = eventsByFilm.value[filmId]?.filter(
+      e => e.id !== eventId
+    ) || [];
     eventToDelete.value = null;
     deleteDialogVisible.value = false;
   }
@@ -205,6 +182,7 @@ const deleteEvent = async () => {
 
     <FilmCollectionTable
       :films="filmCollections"
+      :events-by-film="eventsByFilm"
       :unique-events="uniqueEvents"
       @edit="editFilm"
       @copy="copyFilm"
@@ -213,6 +191,7 @@ const deleteEvent = async () => {
       @edit-event="editEvent"
       @delete-event="confirmDeleteEvent"
       @update-used="updateUsed"
+      @fetch-events="handleFetchEvents"
     />
 
     <CreateFilmDialog
@@ -241,22 +220,6 @@ const deleteEvent = async () => {
       :unique-sources="uniqueSources"
       @save="createNewFilm"
     />
-
-    <v-dialog v-model="deleteDialogVisible" max-width="500">
-      <v-card>
-        <v-card-title class="headline">Confirm Delete</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete this film collection entry?
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" @click="deleteDialogVisible = false">
-            Cancel
-          </v-btn>
-          <v-btn color="red" @click="deleteFilm">Delete</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <v-dialog v-model="deleteDialogVisible" max-width="500">
       <v-card>

@@ -13,28 +13,31 @@ export enum FilmFormat {
 }
 
 export type Event = {
-  id: string,
+  id: number,
   date: Date,
-  event: string,
+  event_type: string,
   notes: string
 }
 
 export type FilmEntry = {
-  id: number,
-  created_at: Date,
-  date_acquired: Date,
-  brand: string,
-  name: string,
-  source: string,
-  iso: number,
-  film_type: FilmType,
-  film_format: FilmFormat,
-  used: number,
-  quantity: number,
-  expiry_date?: string,
-  event_log?: Event[],
-  dx_code?: string,
-  album_url?: string,
-  device?: string,
-  notes?: string,
-}
+  id: number;
+  created_at: Date;
+  date_acquired: Date;
+  brand: string;
+  name: string;
+  source: string;
+  iso: number;
+  film_type: FilmType;
+  film_format: FilmFormat;
+  used: number;
+  quantity: number;
+  expiry_date?: string;
+  dx_code?: string;
+  album_url?: string;
+  device?: string;
+  notes?: string;
+  latest_event?: {
+    date: Date;
+    event_type: string;
+  };
+};

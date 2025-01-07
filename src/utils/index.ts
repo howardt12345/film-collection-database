@@ -38,4 +38,6 @@ export const getSortedEventLog = (eventLog: Event[] | undefined) => {
   );
 };
 
-export const formatDate = (date: Date) => new Date(date).toLocaleDateString();
+export const formatDate = (date: Date) => {
+  return date.toISOString().split('T')[0];
+}
