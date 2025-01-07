@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import EventLogTable from "./EventLogTable.vue";
+import EventLogTable from "./FilmEventLogTable.vue";
 import { Event, FilmEntry } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
