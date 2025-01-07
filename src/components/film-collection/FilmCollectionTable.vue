@@ -103,6 +103,7 @@ const getFilmNameColor = (name: string) => {
     'Portra': 'pink lighten-3',
     'Ektar': 'red lighten-2',
     '800T': 'light-blue lighten-2',
+    '400D': 'deep-purple lighten-2',
     'T-Max': 'blue-grey lighten-2',
     'Pan F': 'grey darken-1',
     'Kentmere': 'brown lighten-2',
