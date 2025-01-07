@@ -10,8 +10,6 @@ declare module 'vue' {
     Auth: typeof import('./src/components/Auth.vue')['default']
     CreateFilmDialog: typeof import('./src/components/film-collection/CreateFilmDialog.vue')['default']
     EditFilmDialog: typeof import('./src/components/film-collection/EditFilmDialog.vue')['default']
-    EventLog: typeof import('./src/components/EventLog.vue')['default']
-    EventLogDialog: typeof import('./src/components/EventLogDialog.vue')['default']
     EventLogTable: typeof import('./src/components/film-collection/EventLogTable.vue')['default']
     FilmCollection: typeof import('./src/components/film-collection/FilmCollection.vue')['default']
     FilmCollectionTable: typeof import('./src/components/film-collection/FilmCollectionTable.vue')['default']
