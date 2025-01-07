@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import EventLogTable from "./EventLogTable.vue";
-import { Event, FilmCollection } from "@/types/film-collection";
+import { Event, FilmEntry } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
 import {
@@ -13,17 +13,17 @@ import {
   addMonths,
 } from "date-fns"; // Import date-fns for date comparison
 
-type TableFilm = FilmCollection & { latest_event_date: string };
+type TableFilm = FilmEntry & { latest_event_date: string };
 
 const props = defineProps<{
-  films: FilmCollection[];
+  films: FilmEntry[];
   uniqueEvents: string[];
 }>();
 
 const emit = defineEmits<{
-  (e: "edit", film: FilmCollection): void;
-  (e: "copy", film: FilmCollection): void;
-  (e: "delete", film: FilmCollection): void;
+  (e: "edit", film: FilmEntry): void;
+  (e: "copy", film: FilmEntry): void;
+  (e: "delete", film: FilmEntry): void;
   (e: "addEvent", filmId: number, event: Event): void;
   (e: "editEvent", filmId: number, eventId: string, updatedEvent: Event): void;
   (e: "deleteEvent", filmId: number, eventId: string): void;
@@ -46,7 +46,7 @@ const filmHeaders = [
 const expandedItem = ref(undefined);
 const search = ref("");
 
-const getLatestEventDate = (film: FilmCollection) => {
+const getLatestEventDate = (film: FilmEntry) => {
   if (!film.event_log || film.event_log.length === 0) {
     return null;
   }

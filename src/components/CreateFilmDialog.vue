@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { FilmCollection, FilmType, FilmFormat } from "@/types/film-collection";
+import { FilmEntry, FilmType, FilmFormat } from "@/types/film-collection";
 import FilmForm from "./FilmForm.vue";
 
 defineProps<{
@@ -19,13 +19,13 @@ const defaultFilm = {
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
-  (e: "create", film: FilmCollection): void;
+  (e: "create", film: FilmEntry): void;
 }>();
 
-const newFilm = ref<Partial<FilmCollection>>(defaultFilm);
+const newFilm = ref<Partial<FilmEntry>>(defaultFilm);
 
 const createNewFilm = () => {
-  emit("create", newFilm.value as FilmCollection);
+  emit("create", newFilm.value as FilmEntry);
   newFilm.value = defaultFilm;
 };
 </script>

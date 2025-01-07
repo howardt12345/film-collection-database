@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { FilmCollection, FilmType, FilmFormat } from "@/types/film-collection";
+import { FilmEntry, FilmType, FilmFormat } from "@/types/film-collection";
 
 const props = defineProps<{
-  film: Partial<FilmCollection>;
+  film: Partial<FilmEntry>;
   uniqueNames: string[];
   uniqueBrands: string[];
   uniqueSources: string[];
 }>();
 
 const emit = defineEmits<{
-  (e: "update:film", value: Partial<FilmCollection>): void;
+  (e: "update:film", value: Partial<FilmEntry>): void;
 }>();
 
-const updateField = (field: keyof FilmCollection, value: any) => {
+const updateField = (field: keyof FilmEntry, value: any) => {
   emit("update:film", { ...props.film, [field]: value });
 };
 </script>

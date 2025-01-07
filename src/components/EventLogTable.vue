@@ -2,11 +2,11 @@
 import { computed, ref } from "vue";
 import { v4 as uuid } from "uuid";
 import VueMarkdown from "vue-markdown-render";
-import { FilmCollection, Event } from "@/types/film-collection";
+import { FilmEntry, Event } from "@/types/film-collection";
 import { getSortedEventLog } from "@/utils";
 
 const props = defineProps<{
-  film: FilmCollection;
+  film: FilmEntry;
   uniqueEvents: string[];
 }>();
 

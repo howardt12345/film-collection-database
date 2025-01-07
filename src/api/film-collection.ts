@@ -1,11 +1,12 @@
-import { FilmCollection } from "@/types/film-collection";
+import { FilmEntry } from "@/types/film-collection";
 import { supabase } from "./supabase";
 
-export const getFilmCollections = async (): Promise<FilmCollection[]> => {
+export const getFilmCollections = async (): Promise<FilmEntry[]> => {
   const { data, error } = await supabase
-    .from("film_collection")
+    .schema("film_collection")
+    .from("film_entry")
     .select("*")
-    .returns<FilmCollection[]>();
+    .returns<FilmEntry[]>();
 
   if (error) {
     console.error("Error fetching film collections:", error);
@@ -16,15 +17,16 @@ export const getFilmCollections = async (): Promise<FilmCollection[]> => {
 };
 
 export const createFilmCollection = async (
-  filmCollection: FilmCollection
-): Promise<FilmCollection> => {
+  filmCollection: FilmEntry
+): Promise<FilmEntry> => {
   const { id, ...filmCollectionWithoutId } = filmCollection;
 
   const { data, error } = await supabase
-    .from("film_collection")
+    .schema("film_collection")
+    .from("film_entry")
     .insert([filmCollectionWithoutId])
     .select()
-    .returns<FilmCollection>()
+    .returns<FilmEntry>()
     .single();
 
   if (error) {
@@ -37,14 +39,15 @@ export const createFilmCollection = async (
 
 export const updateFilmCollection = async (
   id: number,
-  updatedData: Partial<FilmCollection>
-): Promise<FilmCollection> => {
+  updatedData: Partial<FilmEntry>
+): Promise<FilmEntry> => {
   const { data, error } = await supabase
-    .from("film_collection")
+    .schema("film_collection")
+    .from("film_entry")
     .update(updatedData)
     .eq("id", id)
     .select()
-    .returns<FilmCollection>()
+    .returns<FilmEntry>()
     .single();
 
   if (error) {
@@ -57,7 +60,8 @@ export const updateFilmCollection = async (
 
 export const deleteFilmCollection = async (id: number): Promise<void> => {
   const { error } = await supabase
-    .from("film_collection")
+    .schema("film_collection")
+    .from("film_entry")
     .delete()
     .eq("id", id);
 

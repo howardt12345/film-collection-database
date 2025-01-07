@@ -19,7 +19,7 @@ export type Event = {
   notes: string
 }
 
-export type FilmCollection = {
+export type FilmEntry = {
   id: number,
   created_at: Date,
   date_acquired: Date,

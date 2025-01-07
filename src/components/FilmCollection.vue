@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { FilmCollection, Event } from "@/types/film-collection";
+import { FilmEntry, Event } from "@/types/film-collection";
 import {
   getFilmCollections,
   createFilmCollection,
@@ -16,15 +16,15 @@ defineProps<{
   session: Session | null;
 }>();
 
-const filmCollections = ref<FilmCollection[]>([]);
+const filmCollections = ref<FilmEntry[]>([]);
 const createDialogVisible = ref(false);
 const editDialogVisible = ref(false);
 const copyDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
 
-const editingFilm = ref<FilmCollection | null>(null);
-const copyingFilm = ref<FilmCollection | null>(null);
-const filmToDelete = ref<FilmCollection | null>(null);
+const editingFilm = ref<FilmEntry | null>(null);
+const copyingFilm = ref<FilmEntry | null>(null);
+const filmToDelete = ref<FilmEntry | null>(null);
 const eventToDelete = ref<{ filmId: number; eventId: string } | null>(null);
 
 const uniqueNames = computed(() => {
@@ -74,7 +74,7 @@ const fetchFilmCollections = async () => {
 };
 onMounted(fetchFilmCollections);
 
-const createNewFilm = async (newFilm: FilmCollection) => {
+const createNewFilm = async (newFilm: FilmEntry) => {
   const data = await createFilmCollection({
     ...newFilm,
     event_log: [
@@ -88,17 +88,17 @@ const createNewFilm = async (newFilm: FilmCollection) => {
   createDialogVisible.value = false;
 };
 
-const editFilm = (film: FilmCollection) => {
+const editFilm = (film: FilmEntry) => {
   editingFilm.value = { ...film };
   editDialogVisible.value = true;
 };
 
-const copyFilm = (film: FilmCollection) => {
+const copyFilm = (film: FilmEntry) => {
   copyingFilm.value = { ...film };
   copyDialogVisible.value = true;
 };
 
-const confirmDeleteFilm = (film: FilmCollection) => {
+const confirmDeleteFilm = (film: FilmEntry) => {
   filmToDelete.value = film;
   deleteDialogVisible.value = true;
 };
@@ -114,7 +114,7 @@ const deleteFilm = async () => {
   }
 };
 
-const saveEditedFilm = async (editedFilm: FilmCollection) => {
+const saveEditedFilm = async (editedFilm: FilmEntry) => {
   const index = filmCollections.value.findIndex((f) => f.id === editedFilm.id);
   if (index !== -1) {
     filmCollections.value[index] = editedFilm;

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { FilmCollection } from '@/types/film-collection'
+import { FilmEntry } from '@/types/film-collection'
 import FilmForm from './FilmForm.vue'
 
 const props = defineProps<{
   modelValue: boolean
-  film: FilmCollection | null
+  film: FilmEntry | null
   uniqueNames: string[]
   uniqueBrands: string[]
   uniqueSources: string[]
@@ -13,10 +13,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', film: FilmCollection): void
+  (e: 'save', film: FilmEntry): void
 }>()
 
-const editingFilm = ref<FilmCollection | null>(null)
+const editingFilm = ref<FilmEntry | null>(null)
 
 watch(() => props.film, (newFilm) => {
   if (newFilm) {
@@ -24,7 +24,7 @@ watch(() => props.film, (newFilm) => {
   }
 }, { immediate: true })
 
-const updateFilm = (updatedFields: Partial<FilmCollection>) => {
+const updateFilm = (updatedFields: Partial<FilmEntry>) => {
   if (editingFilm.value) {
     editingFilm.value = { ...editingFilm.value, ...updatedFields }
   }
