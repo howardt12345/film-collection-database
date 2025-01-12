@@ -34,6 +34,7 @@ const eventHeaders = [
 // Edit dialog state
 const editDialog = ref(false);
 const editingEvent = ref<Event | null>(null);
+const editingEventFilmIds = ref<number[]>([]);
 
 const sortedEvents = computed(() =>
   [...(props.events || [])].sort((a, b) => {
@@ -48,8 +49,9 @@ const getAssociatedFilms = (eventId: number) => {
   return props.films.filter((film) => event.film_ids.includes(film.id));
 };
 
-const openEditDialog = (event: Event) => {
+const openEditDialog = (event: Event & { film_ids: number[] }) => {
   editingEvent.value = event;
+  editingEventFilmIds.value = event.film_ids;
   editDialog.value = true;
 };
 
@@ -71,12 +73,14 @@ const handleDelete = () => {
 
 const copyDialog = ref(false);
 const copyingEvent = ref<Event | null>(null);
+const copyingEventFilmIds = ref<number[]>([]);
 
-const openCopyDialog = (event: Event) => {
+const openCopyDialog = (event: Event & { film_ids: number[] }) => {
   copyingEvent.value = {
     ...event,
     date: new Date(),
   };
+  copyingEventFilmIds.value = event.film_ids;
   copyDialog.value = true;
 };
 
@@ -84,6 +88,18 @@ const handleCopy = (newEvent: Omit<Event, "id">, filmIds: number[]) => {
   emit("addEvent", filmIds[0], newEvent);
   copyDialog.value = false;
   copyingEvent.value = null;
+  copyingEventFilmIds.value = [];
+};
+
+const handleEditSave = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
+  if (!editingEvent.value) return;
+
+  emit("updateEvent", editingEvent.value.id, updatedEvent);
+  emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
+
+  editDialog.value = false;
+  editingEvent.value = null;
+  editingEventFilmIds.value = [];
 };
 </script>
 
@@ -156,12 +172,22 @@ const handleCopy = (newEvent: Omit<Event, "id">, filmIds: number[]) => {
   </v-data-table>
 
   <EditEventDialog
+    v-model="editDialog"
+    :event="editingEvent"
+    :unique-events="uniqueEvents"
+    :unique-locations="uniqueLocations"
+    :films="films"
+    :associated-film-ids="editingEventFilmIds"
+    @save="handleEditSave"
+  />
+
+  <EditEventDialog
     v-model="copyDialog"
     :event="copyingEvent"
     :unique-events="uniqueEvents"
     :unique-locations="uniqueLocations"
     :films="films"
-    :associated-film-ids="[]"
+    :associated-film-ids="copyingEventFilmIds"
     @save="handleCopy"
   />
 
