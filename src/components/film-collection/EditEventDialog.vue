@@ -44,7 +44,10 @@ watch(
 );
 
 const saveEvent = () => {
-  emit("save", editingEvent.value, selectedFilmIds.value);
+  emit("save", {
+    ...editingEvent.value,
+    date: new Date(editingEvent.value.date),
+  }, selectedFilmIds.value);
   emit("update:modelValue", false);
 };
 </script>
@@ -56,16 +59,15 @@ const saveEvent = () => {
     max-width="500"
   >
     <v-card>
-      <v-card-title>Edit Event</v-card-title>
+      <v-card-title>{{ event ? 'Edit' : 'Create' }} Event</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="6">
             <v-text-field
-              :model-value="
-                editingEvent.date
-                  ? new Date(editingEvent.date).toISOString().split('T')[0]
-                  : ''
-              "
+              :model-value="editingEvent.date instanceof Date
+                ? editingEvent.date.toISOString().split('T')[0]
+                : editingEvent.date"
+              @update:model-value="value => editingEvent.date = new Date(value)"
               label="Event Date"
               type="date"
               density="comfortable"
