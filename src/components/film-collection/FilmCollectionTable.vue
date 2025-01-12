@@ -36,12 +36,12 @@ const filmHeaders = [
   { title: "", key: "actions", sortable: false },
   { title: "Quantity", key: "used", sortable: true },
   { title: "Date Acquired", key: "date_acquired" },
+  { title: "Expiry Date", key: "expiry_date" },
   { title: "Brand", key: "brand" },
   { title: "Name", key: "name" },
   { title: "ISO", key: "iso" },
   { title: "Format", key: "film_format" },
   { title: "Type", key: "film_type" },
-  { title: "Expiry Date", key: "expiry_date" },
   { title: "Latest Event Date", key: "latest_event.date", sortable: true },
 ];
 

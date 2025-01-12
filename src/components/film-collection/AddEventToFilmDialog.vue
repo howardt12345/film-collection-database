@@ -20,6 +20,7 @@ const selectedEventId = ref<number | null>(null);
 const newEvent = ref<Omit<Event, "id">>({
   event_type: "",
   date: new Date(),
+  location: "",
   notes: "",
 });
 
@@ -47,6 +48,7 @@ const resetForm = () => {
   newEvent.value = {
     event_type: "",
     date: new Date(),
+    location: "",
     notes: "",
   };
   emit("update:modelValue", false);

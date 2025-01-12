@@ -11,8 +11,8 @@ import {
   createFilmEvent,
   updateEvent,
   deleteFilmEvent,
-  addFilmToEvent,
   addExistingEventToFilm,
+  editFilmsOnEvent,
 } from "@/api/film-collection";
 import FilmCollectionTable from "./FilmCollectionTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
@@ -72,15 +72,11 @@ const uniqueSources = computed(() => {
   );
 });
 
-const uniqueEvents = computed(() => {
-  const eventTypes = new Set<string>();
-  Object.values(eventsByFilm.value).forEach((events) => {
-    events.forEach((event) => eventTypes.add(event.event_type));
-  });
-  return Array.from(eventTypes);
-});
-
-
+const uniqueEvents = computed(() =>
+  Array.from(new Set(filmEvents.value.map(event => event.event_type)))
+    .filter(Boolean)
+    .sort()
+);
 
 onMounted(async () => {
   filmCollections.value = await getFilmCollections();
@@ -148,33 +144,6 @@ const updateUsed = async (filmId: number, used: number) => {
   }
 };
 
-const addEventToFilm = async (filmId: number, newEvent: Omit<Event, "id">) => {
-  const event = await createFilmEvent(filmId, newEvent);
-  if (!eventsByFilm.value[filmId]) {
-    eventsByFilm.value[filmId] = [];
-  }
-  eventsByFilm.value[filmId].push(event);
-};
-
-const editEvent = async (
-  filmId: number,
-  eventId: number,
-  updatedEvent: Event
-) => {
-  await updateEvent(filmId, eventId, updatedEvent);
-  const eventIndex = eventsByFilm.value[filmId]?.findIndex(
-    (e) => e.id === eventId
-  );
-  if (eventIndex !== undefined && eventIndex !== -1) {
-    eventsByFilm.value[filmId][eventIndex] = updatedEvent;
-  }
-};
-
-const confirmDeleteEvent = (filmId: number, eventId: number) => {
-  eventToDelete.value = { filmId, eventId };
-  deleteDialogVisible.value = true;
-};
-
 const dismissDeleteEvent = () => {
   eventToDelete.value = null;
   deleteDialogVisible.value = false;
@@ -215,10 +184,35 @@ const handleCreateAndAddEventToFilm = async (filmId: number, event: Omit<Event, 
   filmEvents.value = await getEvents();
 };
 
-const handleAddFilmToEvent = async (filmId: number, eventId: number) => {
-  await addFilmToEvent(filmId, eventId);
-  // Refresh events for this film
-  await handleFetchEvents(filmId);
+const handleUpdateEvent = async (eventId: number, event: Omit<Event, "id">) => {
+  await updateEvent(eventId, event);
+  // Refresh events for all films that have this event
+  const filmsWithEvent = Object.entries(eventsByFilm.value)
+    .filter(([_, events]) => events.some(e => e.id === eventId))
+    .map(([filmId]) => Number(filmId));
+
+  for (const filmId of filmsWithEvent) {
+    await handleFetchEvents(filmId);
+  }
+
+  // Refresh all events
+  filmEvents.value = await getEvents();
+};
+
+const handleEditFilmsOnEvent = async (eventId: number, filmIds: number[]) => {
+  await editFilmsOnEvent(eventId, filmIds);
+  // Refresh events for all affected films
+  const affectedFilms = new Set([
+    ...Object.entries(eventsByFilm.value)
+      .filter(([_, events]) => events.some(e => e.id === eventId))
+      .map(([filmId]) => Number(filmId)),
+    ...filmIds
+  ]);
+
+  for (const filmId of affectedFilms) {
+    await handleFetchEvents(filmId);
+  }
+
   // Refresh all events
   filmEvents.value = await getEvents();
 };
@@ -262,11 +256,10 @@ const emit = defineEmits<{
       <v-window-item value="1">
         <EventLogTable
           :events="filmEvents"
-          :unique-events="uniqueEvents"
           :films="filmCollections"
-          @add-event="addEventToFilm"
-          @add-film-to-event="handleAddFilmToEvent"
-          @delete-event="confirmDeleteEvent"
+          :uniqueEvents="uniqueEvents"
+          @update-event="handleUpdateEvent"
+          @edit-films-on-event="handleEditFilmsOnEvent"
         />
       </v-window-item>
     </v-window>

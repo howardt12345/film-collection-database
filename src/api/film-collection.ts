@@ -215,28 +215,20 @@ export const createFilmEvent = async (
 };
 
 export const updateEvent = async (
-  filmId: number,
   eventId: number,
-  updatedEvent: Omit<Event, "id">
-): Promise<Event> => {
-  const { data, error } = await supabase
+  event: Omit<Event, "id">
+): Promise<void> => {
+  const { error } = await supabase
     .schema("film_collection")
     .from("film_events")
     .update({
-      date: updatedEvent.date,
-      event_type: updatedEvent.event_type,
-      notes: updatedEvent.notes
+      date: event.date,
+      event_type: event.event_type,
+      notes: event.notes
     })
-    .eq("id", eventId)
-    .select()
-    .single();
+    .eq("id", eventId);
 
-  if (error) {
-    console.error("Error updating event:", error);
-    throw error;
-  }
-
-  return data;
+  if (error) throw error;
 };
 
 export const deleteFilmEvent = async (
@@ -272,7 +264,7 @@ export const deleteFilmEvent = async (
   }
 };
 
-export const addFilmToEvent = async (
+export const addExistingEventToFilm = async (
   filmId: number,
   eventId: number
 ): Promise<void> => {
@@ -299,29 +291,45 @@ export const addFilmToEvent = async (
   if (error) throw error;
 };
 
-export const addExistingEventToFilm = async (
-  filmId: number,
-  eventId: number
+export const editFilmsOnEvent = async (
+  eventId: number,
+  filmIds: number[]
 ): Promise<void> => {
-  // Check if association already exists
-  const { data: existing, error: checkError } = await supabase
+  // First get current associations
+  const { data: currentAssociations, error: fetchError } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
-    .select("*")
-    .eq("film_entry_id", filmId)
+    .select("film_entry_id")
     .eq("event_id", eventId);
 
-  if (checkError) throw checkError;
-  if (existing && existing.length > 0) return; // Already exists
+  if (fetchError) throw fetchError;
 
-  // Create new association
-  const { error } = await supabase
-    .schema("film_collection")
-    .from("film_entry_events")
-    .insert([{
-      film_entry_id: filmId,
-      event_id: eventId
-    }]);
+  const currentFilmIds = currentAssociations.map(a => a.film_entry_id);
 
-  if (error) throw error;
+  // Remove films that are no longer associated
+  const filmsToRemove = currentFilmIds.filter(id => !filmIds.includes(id));
+  if (filmsToRemove.length > 0) {
+    const { error: removeError } = await supabase
+      .schema("film_collection")
+      .from("film_entry_events")
+      .delete()
+      .eq("event_id", eventId)
+      .in("film_entry_id", filmsToRemove);
+
+    if (removeError) throw removeError;
+  }
+
+  // Add new film associations
+  const filmsToAdd = filmIds.filter(id => !currentFilmIds.includes(id));
+  if (filmsToAdd.length > 0) {
+    const { error: addError } = await supabase
+      .schema("film_collection")
+      .from("film_entry_events")
+      .insert(filmsToAdd.map(filmId => ({
+        film_entry_id: filmId,
+        event_id: eventId
+      })));
+
+    if (addError) throw addError;
+  }
 };
