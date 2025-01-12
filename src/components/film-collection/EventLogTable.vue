@@ -42,16 +42,6 @@ const sortedEvents = computed(() =>
   }),
 );
 
-const sortedFilms = computed(() =>
-  [...props.films].sort((a, b) => {
-    const dateCompare = b.date_acquired.getTime() - a.date_acquired.getTime();
-    if (dateCompare !== 0) return dateCompare;
-    const brandCompare = a.brand.localeCompare(b.brand);
-    if (brandCompare !== 0) return brandCompare;
-    return a.name.localeCompare(b.name);
-  }),
-);
-
 const getAssociatedFilms = (eventId: number) => {
   const event = props.events?.find((e) => e.id === eventId);
   if (!event?.film_ids) return [];
@@ -61,13 +51,6 @@ const getAssociatedFilms = (eventId: number) => {
 const openEditDialog = (event: Event) => {
   editingEvent.value = event;
   editDialog.value = true;
-};
-
-const handleSaveEdit = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
-  if (editingEvent.value) {
-    emit("updateEvent", editingEvent.value.id, updatedEvent);
-    emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
-  }
 };
 
 const deleteDialog = ref(false);

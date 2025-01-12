@@ -15,7 +15,7 @@ import {
   deleteEvent,
   createEventWithoutFilm,
 } from "@/api/film-collection";
-import FilmCollectionTable from "./FilmCollectionTable.vue";
+import FilmCollectionTable from "./FilmEntryTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
 import EventLogTable from "./EventLogTable.vue";
@@ -414,7 +414,7 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
     </div>
 
     <v-tabs v-model="currentTab">
-      <v-tab value="0">Film Collection</v-tab>
+      <v-tab value="0">Film Entries</v-tab>
       <v-tab value="1">Event Log</v-tab>
       <v-tab value="2">Unique Films</v-tab>
     </v-tabs>
