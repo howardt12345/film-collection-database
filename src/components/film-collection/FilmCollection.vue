@@ -18,6 +18,7 @@ import FilmCollectionTable from "./FilmCollectionTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
 import EventLogTable from "./EventLogTable.vue";
+import EditEventDialog from "./EditEventDialog.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
 const filmEvents = ref<(Event & { film_ids: number[] })[]>([]);
@@ -26,6 +27,7 @@ const createDialogVisible = ref(false);
 const editDialogVisible = ref(false);
 const copyDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
+const createEventDialogVisible = ref(false);
 
 const editingFilm = ref<FilmEntry | null>(null);
 const copyingFilm = ref<FilmEntry | null>(null);
@@ -73,7 +75,7 @@ const uniqueSources = computed(() => {
 });
 
 const uniqueEvents = computed(() =>
-  Array.from(new Set(filmEvents.value.map(event => event.event_type)))
+  Array.from(new Set(filmEvents.value.map((event) => event.event_type)))
     .filter(Boolean)
     .sort()
 );
@@ -168,7 +170,10 @@ const handleRemoveEventFromFilm = async (filmId: number, eventId: number) => {
   filmEvents.value = await getEvents();
 };
 
-const handleAddExistingEventToFilm = async (filmId: number, eventId: number) => {
+const handleAddExistingEventToFilm = async (
+  filmId: number,
+  eventId: number
+) => {
   await addExistingEventToFilm(filmId, eventId);
   // Refresh events for this film
   await handleFetchEvents(filmId);
@@ -176,7 +181,10 @@ const handleAddExistingEventToFilm = async (filmId: number, eventId: number) => 
   filmEvents.value = await getEvents();
 };
 
-const handleCreateAndAddEventToFilm = async (filmId: number, event: Omit<Event, "id">) => {
+const handleCreateAndAddEventToFilm = async (
+  filmId: number,
+  event: Omit<Event, "id">
+) => {
   await createFilmEvent(filmId, event);
   // Refresh events for this film
   await handleFetchEvents(filmId);
@@ -188,7 +196,7 @@ const handleUpdateEvent = async (eventId: number, event: Omit<Event, "id">) => {
   await updateEvent(eventId, event);
   // Refresh events for all films that have this event
   const filmsWithEvent = Object.entries(eventsByFilm.value)
-    .filter(([_, events]) => events.some(e => e.id === eventId))
+    .filter(([_, events]) => events.some((e) => e.id === eventId))
     .map(([filmId]) => Number(filmId));
 
   for (const filmId of filmsWithEvent) {
@@ -204,9 +212,9 @@ const handleEditFilmsOnEvent = async (eventId: number, filmIds: number[]) => {
   // Refresh events for all affected films
   const affectedFilms = new Set([
     ...Object.entries(eventsByFilm.value)
-      .filter(([_, events]) => events.some(e => e.id === eventId))
+      .filter(([_, events]) => events.some((e) => e.id === eventId))
       .map(([filmId]) => Number(filmId)),
-    ...filmIds
+    ...filmIds,
   ]);
 
   for (const filmId of affectedFilms) {
@@ -217,6 +225,19 @@ const handleEditFilmsOnEvent = async (eventId: number, filmIds: number[]) => {
   filmEvents.value = await getEvents();
 };
 
+const handleCreateEvent = async (
+  event: Omit<Event, "id">,
+  filmIds: number[]
+) => {
+  for (const filmId of filmIds) {
+    await createFilmEvent(filmId, event);
+    await handleFetchEvents(filmId);
+  }
+  // Refresh all events
+  filmEvents.value = await getEvents();
+  createEventDialogVisible.value = false;
+};
+
 const emit = defineEmits<{
   (e: "addFilmToEvent", filmId: number, eventId: number): void;
 }>();
@@ -225,8 +246,17 @@ const emit = defineEmits<{
 <template>
   <v-container>
     <div class="d-flex align-center ga-4 mb-2">
-      <v-btn color="primary" @click="createDialogVisible = true">
+      <v-btn
+        color="primary"
+        @click="createDialogVisible = true"
+      >
         New Film Entry
+      </v-btn>
+      <v-btn
+        color="primary"
+        @click="createEventDialogVisible = true"
+      >
+        New Event
       </v-btn>
     </div>
 
@@ -289,6 +319,15 @@ const emit = defineEmits<{
       :unique-brands="uniqueBrands"
       :unique-sources="uniqueSources"
       @save="createNewFilm"
+    />
+
+    <EditEventDialog
+      v-model="createEventDialogVisible"
+      :event="null"
+      :unique-events="uniqueEvents"
+      :films="filmCollections"
+      :associated-film-ids="[]"
+      @save="handleCreateEvent"
     />
 
     <v-dialog v-model="deleteDialogVisible" max-width="500">

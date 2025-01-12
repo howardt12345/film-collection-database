@@ -4,6 +4,7 @@ import { Event, FilmEntry } from "@/types/film-collection";
 import VueMarkdown from "vue-markdown-render";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
 import { formatDate } from "@/utils";
+import EditEventDialog from "./EditEventDialog.vue";
 
 const props = defineProps<{
   events: (Event & { film_ids: number[] })[];
@@ -28,24 +29,9 @@ const eventHeaders = [
   { title: "Associated Films", key: "films", sortable: false, width: "25%" },
 ];
 
-const newEvent = ref<Omit<Event, "id">>({
-  event_type: "",
-  date: new Date(),
-  location: "",
-  notes: "",
-});
-const selectedFilmIds = ref<number[]>([]);
-
-// Add editing state
-const editingEventId = ref<number | null>(null);
-const editingEvent = ref<Omit<Event, "id">>({
-  event_type: "",
-  date: new Date(),
-  location: "",
-  notes: "",
-});
-
-const editingFilms = ref<number[]>([]);
+// Edit dialog state
+const editDialog = ref(false);
+const editingEvent = ref<Event | null>(null);
 
 const sortedEvents = computed(() =>
   [...(props.events || [])].sort((a, b) => {
@@ -56,15 +42,10 @@ const sortedEvents = computed(() =>
 
 const sortedFilms = computed(() =>
   [...props.films].sort((a, b) => {
-    // First sort by date (newest first)
     const dateCompare = b.date_acquired.getTime() - a.date_acquired.getTime();
     if (dateCompare !== 0) return dateCompare;
-
-    // Then by brand
     const brandCompare = a.brand.localeCompare(b.brand);
     if (brandCompare !== 0) return brandCompare;
-
-    // Finally by name
     return a.name.localeCompare(b.name);
   })
 );
@@ -75,49 +56,16 @@ const getAssociatedFilms = (eventId: number) => {
   return props.films.filter((film) => event.film_ids.includes(film.id));
 };
 
-const addEvent = () => {
-  if (
-    newEvent.value.event_type &&
-    newEvent.value.date &&
-    selectedFilmIds.value.length > 0
-  ) {
-    selectedFilmIds.value.forEach((filmId) => {
-      emit("addEvent", filmId, { ...newEvent.value });
-    });
+const openEditDialog = (event: Event) => {
+  editingEvent.value = event;
+  editDialog.value = true;
+};
 
-    newEvent.value = {
-      event_type: "",
-      date: new Date(),
-      location: "",
-      notes: "",
-    };
-    selectedFilmIds.value = [];
+const handleSaveEdit = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
+  if (editingEvent.value) {
+    emit("updateEvent", editingEvent.value.id, updatedEvent);
+    emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
   }
-};
-
-const startEditing = (event: Event) => {
-  editingEventId.value = event.id;
-  editingEvent.value = {
-    event_type: event.event_type,
-    date: new Date(event.date),
-    location: event.location || "",
-    notes: event.notes || "",
-  };
-  editingFilms.value = getAssociatedFilms(event.id).map((f) => f.id);
-};
-
-const saveEdit = () => {
-  if (editingEventId.value) {
-    emit("updateEvent", editingEventId.value, editingEvent.value);
-    emit("editFilmsOnEvent", editingEventId.value, editingFilms.value);
-    editingEventId.value = null;
-    editingFilms.value = [];
-  }
-};
-
-const cancelEdit = () => {
-  editingEventId.value = null;
-  editingFilms.value = [];
 };
 </script>
 
@@ -128,200 +76,51 @@ const cancelEdit = () => {
     class="elevation-1"
     :items-per-page="25"
   >
-    <template v-slot:top>
-      <v-row class="ma-2">
-        <v-col cols="2">
-          <v-text-field
-            v-model="newEvent.date"
-            label="Event Date"
-            type="date"
-            density="comfortable"
-          ></v-text-field>
-        </v-col>
-        <v-col cols="2">
-          <v-combobox
-            v-model="newEvent.event_type"
-            :items="uniqueEvents"
-            label="Event Type"
-            density="comfortable"
-          ></v-combobox>
-        </v-col>
-        <v-col cols="3">
-          <v-textarea
-            v-model="newEvent.notes"
-            label="Notes"
-            density="comfortable"
-            rows="1"
-          ></v-textarea>
-        </v-col>
-        <v-col cols="3">
-          <v-select
-            v-model="selectedFilmIds"
-            :items="sortedFilms"
-            item-value="id"
-            label="Select Films"
-            :item-title="film => `${formatDate(film.date_acquired)}: ${film.brand} ${film.name}`"
-            :return-object="false"
-            multiple
-            chips
-            closable-chips
-            density="comfortable"
-          >
-            <template v-slot:item="{ item, props: itemProps }">
-              <v-list-item v-bind="itemProps">
-                <template v-slot:title>
-                  <div class="d-flex align-center gap-4">
-                    <span class="text-grey mr-2">{{ formatDate(item.raw.date_acquired) }}</span>
-                    <div class="d-flex align-center gap-1">
-                      <v-chip
-                        size="small"
-                        :color="getBrandColor(item.raw.brand)"
-                      >
-                        {{ item.raw.brand }}
-                      </v-chip>
-                      <v-chip
-                        size="small"
-                        :color="getFilmNameColor(item.raw.name)"
-                      >
-                        {{ item.raw.name }}
-                      </v-chip>
-                    </div>
-                  </div>
-                </template>
-              </v-list-item>
-            </template>
-          </v-select>
-        </v-col>
-        <v-col cols="2" class="pt-4">
-          <v-btn
-            color="primary"
-            @click="addEvent"
-            :disabled="
-              !newEvent.event_type ||
-              !newEvent.date ||
-              selectedFilmIds.length === 0
-            "
-          >
-            Add Event
-          </v-btn>
-        </v-col>
-      </v-row>
-    </template>
-
     <template v-slot:item.date="{ item }">
-      <template v-if="editingEventId === item.id">
-        <v-text-field
-          v-model="editingEvent.date"
-          type="date"
-          density="compact"
-          hide-details
-        />
-      </template>
-      <template v-else>
-        {{ formatDate(item.date) }}
-      </template>
+      {{ formatDate(item.date) }}
     </template>
 
     <template v-slot:item.event_type="{ item }">
-      <template v-if="editingEventId === item.id">
-        <v-combobox
-          v-model="editingEvent.event_type"
-          :items="uniqueEvents"
-          density="compact"
-          hide-details
-        />
-      </template>
-      <template v-else>
-        {{ item.event_type }}
-      </template>
+      {{ item.event_type }}
+    </template>
+
+    <template v-slot:item.location="{ item }">
+      {{ item.location }}
     </template>
 
     <template v-slot:item.notes="{ item }">
-      <template v-if="editingEventId === item.id">
-        <v-textarea
-          v-model="editingEvent.notes"
-          density="compact"
-          hide-details
-          rows="2"
-          auto-grow
-        />
-      </template>
-      <template v-else>
-        <vue-markdown v-if="item.notes" :source="item.notes" />
-      </template>
+      <vue-markdown v-if="item.notes" :source="item.notes" />
     </template>
 
     <template v-slot:item.films="{ item }">
-      <template v-if="editingEventId === item.id">
-        <v-select
-          v-model="editingFilms"
-          :items="props.films"
-          item-value="id"
-          :item-title="film => `${formatDate(film.date_acquired)}:  ${film.brand} ${film.name}`"
-          :return-object="false"
-          multiple
-          chips
-          closable-chips
-          density="comfortable"
+      <div class="d-flex flex-wrap gap-1 my-2">
+        <v-chip
+          v-for="film in getAssociatedFilms(item.id)"
+          :key="film.id"
+          class="ma-1"
+          size="small"
+          :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
         >
-          <template v-slot:item="{ item, props: itemProps }">
-            <v-list-item v-bind="itemProps">
-              <template v-slot:title>
-                <div class="d-flex align-center gap-4">
-                  <span class="text-grey mr-2">{{ formatDate(item.raw.date_acquired) }}</span>
-                  <div class="d-flex align-center gap-1">
-                    <v-chip
-                      size="small"
-                      :color="getBrandColor(item.raw.brand)"
-                    >
-                      {{ item.raw.brand }}
-                    </v-chip>
-                    <v-chip
-                      size="small"
-                      :color="getFilmNameColor(item.raw.name)"
-                    >
-                      {{ item.raw.name }}
-                    </v-chip>
-                  </div>
-                </div>
-              </template>
-            </v-list-item>
-          </template>
-        </v-select>
-      </template>
-      <template v-else>
-        <div class="d-flex flex-wrap gap-1 my-2">
-          <v-chip
-            v-for="film in getAssociatedFilms(item.id)"
-            :key="film.id"
-            class="ma-1"
-            size="small"
-            :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
-          >
-            {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
-          </v-chip>
-        </div>
-      </template>
+          {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
+        </v-chip>
+      </div>
     </template>
 
     <template v-slot:item.actions="{ item }">
-      <template v-if="editingEventId === item.id">
-        <div class="d-flex gap-2">
-          <v-btn icon size="small" color="success" @click="saveEdit">
-            <v-icon>mdi-check</v-icon>
-          </v-btn>
-          <v-btn icon size="small" color="error" @click="cancelEdit">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </div>
-      </template>
-      <template v-else>
-        <div class="d-flex gap-2">
-          <v-btn icon size="small" color="primary" @click="startEditing(item)">
-            <v-icon>mdi-pencil</v-icon>
-          </v-btn>
-        </div>
-      </template>
+      <div class="d-flex gap-2">
+        <v-btn icon size="small" color="primary" @click="openEditDialog(item)">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+      </div>
     </template>
   </v-data-table>
+
+  <EditEventDialog
+    v-model="editDialog"
+    :event="editingEvent"
+    :unique-events="uniqueEvents"
+    :films="films"
+    :associated-film-ids="editingEvent ? getAssociatedFilms(editingEvent.id).map(f => f.id) : []"
+    @save="handleSaveEdit"
+  />
 </template>
