@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Event } from "@/types/film-collection";
+import { formatDate } from "@/utils";
 
 const props = defineProps<{
   modelValue: boolean;
@@ -36,7 +37,7 @@ const addEvent = () => {
       emit("createEvent", { ...newEvent.value });
       resetForm();
     }
-  } else if (selectedEventId.value) {
+  } else if (selectedEventId.value !== null) {
     emit("selectEvent", selectedEventId.value);
     resetForm();
   }
@@ -108,22 +109,14 @@ const resetForm = () => {
               <v-select
                 v-model="selectedEventId"
                 :items="sortedEvents"
-                item-title="event_type"
+                :item-title="
+                  (event) => `${formatDate(event.date)}: ${event.event_type}`
+                "
                 item-value="id"
                 label="Select Event"
                 density="comfortable"
                 :return-object="false"
               >
-                <template v-slot:item="{ item }">
-                  <v-list-item>
-                    <template v-slot:prepend>
-                      <div class="d-flex align-center gap-4">
-                        <span class="text-grey">{{ item.raw.date }}</span>
-                        <span>{{ item.raw.event_type }}</span>
-                      </div>
-                    </template>
-                  </v-list-item>
-                </template>
               </v-select>
             </v-col>
           </v-row>
