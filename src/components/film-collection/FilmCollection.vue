@@ -20,6 +20,7 @@ import CreateFilmDialog from "./CreateFilmDialog.vue";
 import EditFilmDialog from "./EditFilmDialog.vue";
 import EventLogTable from "./EventLogTable.vue";
 import EditEventDialog from "./EditEventDialog.vue";
+import UniqueFilmsTable from "./UniqueFilmsTable.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
 const filmEvents = ref<(Event & { film_ids: number[] })[]>([]);
@@ -187,11 +188,15 @@ const dismissDeleteEvent = () => {
 const handleDeleteEvent = async () => {
   if (eventToDelete.value) {
     await deleteEvent(eventToDelete.value!.eventId);
-    eventToDelete.value!.film_ids.forEach(filmId => {
+    eventToDelete.value!.film_ids.forEach((filmId) => {
       eventsByFilm.value[filmId] =
-        eventsByFilm.value[filmId]?.filter(e => e.id !== eventToDelete.value!.eventId) || [];
+        eventsByFilm.value[filmId]?.filter(
+          (e) => e.id !== eventToDelete.value!.eventId
+        ) || [];
     });
-    filmEvents.value = filmEvents.value.filter(e => e.id !== eventToDelete.value!.eventId);
+    filmEvents.value = filmEvents.value.filter(
+      (e) => e.id !== eventToDelete.value!.eventId
+    );
     deleteDialogVisible.value = false;
     eventToDelete.value = null;
   }
@@ -341,7 +346,7 @@ const handleCreateEvent = async (
 
   // Update eventsByFilm for each selected film
   if (filmIds.length > 0) {
-    filmIds.forEach(filmId => {
+    filmIds.forEach((filmId) => {
       if (!eventsByFilm.value[filmId]) eventsByFilm.value[filmId] = [];
       eventsByFilm.value[filmId].push({
         id: newEvent.id,
@@ -358,20 +363,20 @@ const handleCreateEvent = async (
 
 const handleRemoveEvent = async (eventId: number) => {
   // Get all films associated with this event
-  const event = filmEvents.value.find(e => e.id === eventId);
+  const event = filmEvents.value.find((e) => e.id === eventId);
   if (!event) return;
 
   await deleteEvent(eventId);
 
   // Update local state
   // Remove from eventsByFilm
-  event.film_ids.forEach(filmId => {
+  event.film_ids.forEach((filmId) => {
     eventsByFilm.value[filmId] =
-      eventsByFilm.value[filmId]?.filter(e => e.id !== eventId) || [];
+      eventsByFilm.value[filmId]?.filter((e) => e.id !== eventId) || [];
   });
 
   // Remove from filmEvents
-  filmEvents.value = filmEvents.value.filter(e => e.id !== eventId);
+  filmEvents.value = filmEvents.value.filter((e) => e.id !== eventId);
 };
 
 const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
@@ -405,6 +410,7 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
     <v-tabs v-model="currentTab">
       <v-tab value="0">Film Collection</v-tab>
       <v-tab value="1">Event Log</v-tab>
+      <v-tab value="2">Unique Films</v-tab>
     </v-tabs>
 
     <v-window v-model="currentTab">
@@ -435,6 +441,10 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
           @remove-event="handleRemoveEvent"
           @add-event="handleAddEvent"
         />
+      </v-window-item>
+
+      <v-window-item value="2">
+        <UniqueFilmsTable :films="filmCollections" />
       </v-window-item>
     </v-window>
 
