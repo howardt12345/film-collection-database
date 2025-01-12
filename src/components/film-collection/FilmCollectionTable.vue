@@ -27,9 +27,12 @@ const emit = defineEmits<{
   (e: "delete", film: FilmEntry): void;
   (e: "removeEventFromFilm", filmId: number, eventId: number): void;
   (e: "addExistingEventToFilm", filmId: number, eventId: number): void;
-  (e: "createAndAddEventToFilm", filmId: number, event: Omit<Event, "id">): void;
+  (
+    e: "createAndAddEventToFilm",
+    filmId: number,
+    event: Omit<Event, "id">
+  ): void;
   (e: "updateUsed", filmId: number, used: number): void;
-  (e: "fetchEvents", filmId: number): void;
 }>();
 
 const filmHeaders = [
@@ -51,15 +54,6 @@ const expandedItem = ref<string[]>([]);
 
 const addEventDialog = ref(false);
 const selectedFilmForEvent = ref<FilmEntry | null>(null);
-
-const handleExpand = async (expanded: string[]) => {
-  if (!expanded || expanded.length === 0) return;
-
-  const itemId = Number(expanded[expanded.length - 1]);
-  if (itemId && !props.eventsByFilm[itemId]) {
-    emit('fetchEvents', itemId);
-  }
-};
 
 const updateUsed = (item: FilmEntry, increment: number) => {
   const newUsed = Math.max(
@@ -135,23 +129,24 @@ const openAddEventDialog = (film: FilmEntry) => {
 
 const handleEventAdd = (eventId: number) => {
   if (selectedFilmForEvent.value) {
-    emit('addExistingEventToFilm', selectedFilmForEvent.value.id, eventId);
+    emit("addExistingEventToFilm", selectedFilmForEvent.value.id, eventId);
   }
 };
 
 const handleEventCreate = (event: Omit<Event, "id">) => {
   if (selectedFilmForEvent.value) {
-    emit('createAndAddEventToFilm', selectedFilmForEvent.value.id, event);
+    emit("createAndAddEventToFilm", selectedFilmForEvent.value.id, event);
   }
 };
 
 const allEvents = computed(() =>
-  Object.values(props.eventsByFilm).flat().map(event => ({
-    ...event,
-    film_ids: [] // Add film_ids property
-  }))
+  Object.values(props.eventsByFilm)
+    .flat()
+    .map((event) => ({
+      ...event,
+      film_ids: [], // Add film_ids property
+    }))
 );
-
 </script>
 
 <template>
@@ -173,7 +168,6 @@ const allEvents = computed(() =>
       class="elevation-1"
       show-expand
       v-model:expanded="expandedItem"
-      @update:expanded="handleExpand"
       :search="search"
       :items-per-page="25"
     >
@@ -232,10 +226,7 @@ const allEvents = computed(() =>
       </template>
 
       <template #item.expiry_date="{ item }">
-        <v-tooltip
-          :text="getExpiryStatus(item.expiry_date)"
-          location="top"
-        >
+        <v-tooltip :text="getExpiryStatus(item.expiry_date)" location="top">
           <template v-slot:activator="{ props }">
             <span
               :class="getExpiryDateClass(item.expiry_date)"
@@ -246,7 +237,9 @@ const allEvents = computed(() =>
         </v-tooltip>
       </template>
       <template #item.latest_event.date="{ item }">
-        {{ item.latest_event?.date ? formatDate(item.latest_event.date) : "N/A" }}
+        {{
+          item.latest_event?.date ? formatDate(item.latest_event.date) : "N/A"
+        }}
       </template>
 
       <template #item.used="{ item }">
@@ -344,7 +337,9 @@ const allEvents = computed(() =>
                   </div>
                   <EventLogTable
                     :events="eventsByFilm[item.id] || []"
-                    @remove-event="(eventId) => emit('removeEventFromFilm', item.id, eventId)"
+                    @remove-event="
+                      (eventId) => emit('removeEventFromFilm', item.id, eventId)
+                    "
                   />
                 </v-col>
               </v-row>

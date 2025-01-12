@@ -137,26 +137,6 @@ export const getEvents = async (): Promise<(Event & { film_ids: number[] })[]> =
   }));
 };
 
-export const getEventsForFilm = async (filmId: number): Promise<Event[]> => {
-  const { data, error } = await supabase
-    .schema("film_collection")
-    .from("film_entry_events")
-    .select(`
-      event:film_events(*)
-    `)
-    .eq("film_entry_id", filmId)
-    .returns<{ event: Event }[]>();
-
-  if (error) throw error;
-
-  return data
-    .filter(Boolean)
-    .map(item => ({
-      ...item.event,
-      date: new Date(item.event.date),
-    }));
-};
-
 export const createFilmEvent = async (
   filmId: number,
   event: Omit<Event, "id">
