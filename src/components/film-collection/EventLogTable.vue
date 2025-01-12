@@ -39,7 +39,7 @@ const sortedEvents = computed(() =>
   [...(props.events || [])].sort((a, b) => {
     if (!a.date || !b.date) return 0;
     return b.date.getTime() - a.date.getTime();
-  })
+  }),
 );
 
 const sortedFilms = computed(() =>
@@ -49,7 +49,7 @@ const sortedFilms = computed(() =>
     const brandCompare = a.brand.localeCompare(b.brand);
     if (brandCompare !== 0) return brandCompare;
     return a.name.localeCompare(b.name);
-  })
+  }),
 );
 
 const getAssociatedFilms = (eventId: number) => {
@@ -186,7 +186,8 @@ const handleCopy = (newEvent: Omit<Event, "id">, filmIds: number[]) => {
     <v-card>
       <v-card-title class="headline">Confirm Delete</v-card-title>
       <v-card-text>
-        Are you sure you want to delete this event? This will remove it from all associated films.
+        Are you sure you want to delete this event? This will remove it from all
+        associated films.
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

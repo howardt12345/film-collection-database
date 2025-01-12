@@ -9,16 +9,16 @@ export enum FilmType {
 export enum FilmFormat {
   _35mm = "35mm",
   _120 = "120",
-  _600 = "600"
+  _600 = "600",
 }
 
 export type Event = {
-  id: number,
-  date: Date,
-  event_type: string,
-  location: string,
-  notes: string
-}
+  id: number;
+  date: Date;
+  event_type: string;
+  location: string;
+  notes: string;
+};
 
 export type FilmEntry = {
   id: number;

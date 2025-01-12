@@ -5,7 +5,10 @@ type DateToString<T> = {
   [K in keyof T]: T[K] extends Date ? string : T[K];
 };
 
-type FilmEntryBase = Omit<FilmEntry, 'created_at' | 'date_acquired' | 'latest_event'>;
+type FilmEntryBase = Omit<
+  FilmEntry,
+  "created_at" | "date_acquired" | "latest_event"
+>;
 type FilmEntryResponse = DateToString<FilmEntryBase> & {
   created_at: string;
   date_acquired: string;
@@ -18,7 +21,8 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_entry")
-    .select(`
+    .select(
+      `
       *,
       film_entry_events(
         film_events(
@@ -28,29 +32,30 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
           notes
         )
       )
-    `)
-    .order('date_acquired', { ascending: false })
+    `,
+    )
+    .order("date_acquired", { ascending: false })
     .returns<FilmEntryResponse[]>();
 
   if (error) throw error;
 
-  return data.map(entry => ({
+  return data.map((entry) => ({
     ...entry,
-    latest_event: entry.film_entry_events
-      ?.map(fee => ({
-        ...fee.film_events,
-        date: new Date(fee.film_events.date)
-      }))
-      ?.filter(Boolean)
-      ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0] || null,
+    latest_event:
+      entry.film_entry_events
+        ?.map((fee) => ({
+          ...fee.film_events,
+          date: new Date(fee.film_events.date),
+        }))
+        ?.filter(Boolean)
+        ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0] || null,
     created_at: new Date(entry.created_at),
-    date_acquired: new Date(entry.date_acquired)
+    date_acquired: new Date(entry.date_acquired),
   }));
 };
 
-
 export const createFilmCollection = async (
-  filmCollection: Omit<FilmEntry, "id" | "created_at">
+  filmCollection: Omit<FilmEntry, "id" | "created_at">,
 ): Promise<FilmEntry> => {
   const { data, error } = await supabase
     .schema("film_collection")
@@ -69,7 +74,7 @@ export const createFilmCollection = async (
 
 export const updateFilmCollection = async (
   id: number,
-  updatedData: Partial<FilmEntry>
+  updatedData: Partial<FilmEntry>,
 ): Promise<FilmEntry> => {
   const { data, error } = await supabase
     .schema("film_collection")
@@ -110,7 +115,9 @@ export const deleteFilmCollection = async (id: number): Promise<void> => {
   }
 };
 
-export const getEvents = async (): Promise<(Event & { film_ids: number[] })[]> => {
+export const getEvents = async (): Promise<
+  (Event & { film_ids: number[] })[]
+> => {
   // First get all events
   const { data: events, error: eventsError } = await supabase
     .schema("film_collection")
@@ -128,18 +135,18 @@ export const getEvents = async (): Promise<(Event & { film_ids: number[] })[]> =
   if (associationsError) throw associationsError;
 
   // Map the associations to the events
-  return events.map(event => ({
+  return events.map((event) => ({
     ...event,
     date: new Date(event.date),
     film_ids: associations
-      .filter(assoc => assoc.event_id === event.id)
-      .map(assoc => assoc.film_entry_id)
+      .filter((assoc) => assoc.event_id === event.id)
+      .map((assoc) => assoc.film_entry_id),
   }));
 };
 
 export const createFilmEvent = async (
   filmId: number,
-  event: Omit<Event, "id">
+  event: Omit<Event, "id">,
 ): Promise<Event> => {
   // Check if an identical "Acquired" event exists with matching date and location
   const { data: existingEvents } = await supabase
@@ -161,12 +168,14 @@ export const createFilmEvent = async (
     const { data: newEvent, error: eventError } = await supabase
       .schema("film_collection")
       .from("film_events")
-      .insert([{
-        date: event.date,
-        event_type: event.event_type,
-        location: event.location,
-        notes: event.notes
-      }])
+      .insert([
+        {
+          date: event.date,
+          event_type: event.event_type,
+          location: event.location,
+          notes: event.notes,
+        },
+      ])
       .select()
       .single();
 
@@ -178,10 +187,12 @@ export const createFilmEvent = async (
   const { error: linkError } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
-    .insert([{
-      film_entry_id: filmId,
-      event_id: eventId
-    }]);
+    .insert([
+      {
+        film_entry_id: filmId,
+        event_id: eventId,
+      },
+    ]);
 
   if (linkError) throw linkError;
 
@@ -199,7 +210,7 @@ export const createFilmEvent = async (
 
 export const updateEvent = async (
   eventId: number,
-  event: Omit<Event, "id">
+  event: Omit<Event, "id">,
 ): Promise<void> => {
   const { error } = await supabase
     .schema("film_collection")
@@ -207,7 +218,7 @@ export const updateEvent = async (
     .update({
       date: event.date,
       event_type: event.event_type,
-      notes: event.notes
+      notes: event.notes,
     })
     .eq("id", eventId);
 
@@ -216,7 +227,7 @@ export const updateEvent = async (
 
 export const deleteFilmEvent = async (
   filmId: number,
-  eventId: number
+  eventId: number,
 ): Promise<void> => {
   // First delete the link
   const { error: linkError } = await supabase
@@ -249,7 +260,7 @@ export const deleteFilmEvent = async (
 
 export const addExistingEventToFilm = async (
   filmId: number,
-  eventId: number
+  eventId: number,
 ): Promise<void> => {
   // Check if association already exists
   const { data: existing, error: checkError } = await supabase
@@ -266,17 +277,19 @@ export const addExistingEventToFilm = async (
   const { error } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
-    .insert([{
-      film_entry_id: filmId,
-      event_id: eventId
-    }]);
+    .insert([
+      {
+        film_entry_id: filmId,
+        event_id: eventId,
+      },
+    ]);
 
   if (error) throw error;
 };
 
 export const editFilmsOnEvent = async (
   eventId: number,
-  filmIds: number[]
+  filmIds: number[],
 ): Promise<void> => {
   // First get current associations
   const { data: currentAssociations, error: fetchError } = await supabase
@@ -287,10 +300,10 @@ export const editFilmsOnEvent = async (
 
   if (fetchError) throw fetchError;
 
-  const currentFilmIds = currentAssociations.map(a => a.film_entry_id);
+  const currentFilmIds = currentAssociations.map((a) => a.film_entry_id);
 
   // Remove films that are no longer associated
-  const filmsToRemove = currentFilmIds.filter(id => !filmIds.includes(id));
+  const filmsToRemove = currentFilmIds.filter((id) => !filmIds.includes(id));
   if (filmsToRemove.length > 0) {
     const { error: removeError } = await supabase
       .schema("film_collection")
@@ -303,15 +316,17 @@ export const editFilmsOnEvent = async (
   }
 
   // Add new film associations
-  const filmsToAdd = filmIds.filter(id => !currentFilmIds.includes(id));
+  const filmsToAdd = filmIds.filter((id) => !currentFilmIds.includes(id));
   if (filmsToAdd.length > 0) {
     const { error: addError } = await supabase
       .schema("film_collection")
       .from("film_entry_events")
-      .insert(filmsToAdd.map(filmId => ({
-        film_entry_id: filmId,
-        event_id: eventId
-      })));
+      .insert(
+        filmsToAdd.map((filmId) => ({
+          film_entry_id: filmId,
+          event_id: eventId,
+        })),
+      );
 
     if (addError) throw addError;
   }
@@ -338,17 +353,19 @@ export const deleteEvent = async (eventId: number): Promise<void> => {
 };
 
 export const createEventWithoutFilm = async (
-  event: Omit<Event, "id">
+  event: Omit<Event, "id">,
 ): Promise<Event> => {
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_events")
-    .insert([{
-      date: event.date,
-      event_type: event.event_type,
-      location: event.location,
-      notes: event.notes
-    }])
+    .insert([
+      {
+        date: event.date,
+        event_type: event.event_type,
+        location: event.location,
+        notes: event.notes,
+      },
+    ])
     .select()
     .single();
 

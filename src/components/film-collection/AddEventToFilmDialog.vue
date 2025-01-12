@@ -25,9 +25,9 @@ const newEvent = ref<Omit<Event, "id">>({
 });
 
 const sortedEvents = computed(() =>
-  [...props.existingEvents].sort((a, b) =>
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  )
+  [...props.existingEvents].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  ),
 );
 
 const addEvent = () => {
@@ -136,7 +136,11 @@ const resetForm = () => {
         <v-btn
           color="primary"
           @click="addEvent"
-          :disabled="isCreatingNew ? !newEvent.event_type || !newEvent.date : !selectedEventId"
+          :disabled="
+            isCreatingNew
+              ? !newEvent.event_type || !newEvent.date
+              : !selectedEventId
+          "
         >
           Add Event
         </v-btn>

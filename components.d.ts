@@ -18,5 +18,6 @@ declare module 'vue' {
     FilmCollectionTable: typeof import('./src/components/film-collection/FilmCollectionTable.vue')['default']
     FilmEventLogTable: typeof import('./src/components/film-collection/FilmEventLogTable.vue')['default']
     FilmForm: typeof import('./src/components/film-collection/FilmForm.vue')['default']
+    UniqueFilmsTable: typeof import('./src/components/film-collection/UniqueFilmsTable.vue')['default']
   }
 }

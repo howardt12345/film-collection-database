@@ -5,7 +5,9 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "production": "vite build --mode production"
+    "production": "vite build --mode production",
+    "format": "prettier --write \"src/**/*.{ts,tsx,vue,js,jsx,css,scss}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,vue,js,jsx,css,scss}\""
   },
   "dependencies": {
     "@mdi/font": "7.4.47",
@@ -22,6 +24,7 @@
     "@types/node": "^20.14.10",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-vue": "^5.0.5",
+    "prettier": "^3.4.2",
     "sass": "1.77.6",
     "typescript": "^5.4.2",
     "unplugin-fonts": "^1.1.1",

@@ -21,9 +21,9 @@ const eventHeaders = [
 ];
 
 const sortedEvents = computed(() =>
-  [...props.events].sort((a, b) =>
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  )
+  [...props.events].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  ),
 );
 </script>
 

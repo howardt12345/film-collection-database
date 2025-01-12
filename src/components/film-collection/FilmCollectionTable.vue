@@ -30,7 +30,7 @@ const emit = defineEmits<{
   (
     e: "createAndAddEventToFilm",
     filmId: number,
-    event: Omit<Event, "id">
+    event: Omit<Event, "id">,
   ): void;
   (e: "updateUsed", filmId: number, used: number): void;
 }>();
@@ -58,7 +58,7 @@ const selectedFilmForEvent = ref<FilmEntry | null>(null);
 const updateUsed = (item: FilmEntry, increment: number) => {
   const newUsed = Math.max(
     0,
-    Math.min(item.quantity ?? 0, (item.used ?? 0) + increment)
+    Math.min(item.quantity ?? 0, (item.used ?? 0) + increment),
   );
   emit("updateUsed", item.id, newUsed);
 };
@@ -145,7 +145,7 @@ const allEvents = computed(() =>
     .map((event) => ({
       ...event,
       film_ids: [], // Add film_ids property
-    }))
+    })),
 );
 </script>
 
@@ -263,8 +263,8 @@ const allEvents = computed(() =>
                   item.used === item.quantity
                     ? 'text-success'
                     : item.used < item.quantity && item.used > 0
-                    ? 'text-primary'
-                    : 'primary'
+                      ? 'text-primary'
+                      : 'primary'
                 "
                 >{{ item.used }} / {{ item.quantity }}
               </span>

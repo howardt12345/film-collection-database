@@ -40,7 +40,7 @@ watch(
       selectedFilmIds.value = [...props.associatedFilmIds];
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const saveEvent = () => {
@@ -61,7 +61,11 @@ const saveEvent = () => {
         <v-row>
           <v-col cols="6">
             <v-text-field
-              :model-value="editingEvent.date ? new Date(editingEvent.date).toISOString().split('T')[0] : ''"
+              :model-value="
+                editingEvent.date
+                  ? new Date(editingEvent.date).toISOString().split('T')[0]
+                  : ''
+              "
               label="Event Date"
               type="date"
               density="comfortable"
@@ -100,7 +104,10 @@ const saveEvent = () => {
               :items="films"
               item-value="id"
               label="Associated Films"
-              :item-title="film => `${formatDate(film.date_acquired)}: ${film.brand} ${film.name}`"
+              :item-title="
+                (film) =>
+                  `${formatDate(film.date_acquired)}: ${film.brand} ${film.name}`
+              "
               :return-object="false"
               multiple
               chips
@@ -111,7 +118,9 @@ const saveEvent = () => {
                 <v-list-item v-bind="itemProps">
                   <template v-slot:title>
                     <div class="d-flex align-center gap-4">
-                      <span class="text-grey mr-2">{{ formatDate(item.raw.date_acquired) }}</span>
+                      <span class="text-grey mr-2">{{
+                        formatDate(item.raw.date_acquired)
+                      }}</span>
                       <div class="d-flex align-center gap-1">
                         <v-chip
                           size="small"
@@ -150,4 +159,3 @@ const saveEvent = () => {
     </v-card>
   </v-dialog>
 </template>
-

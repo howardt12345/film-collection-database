@@ -20,7 +20,11 @@ const updateField = (field: keyof FilmEntry, value: any) => {
 <template>
   <v-form @submit.prevent>
     <v-text-field
-      :model-value="film.date_acquired ? new Date(film.date_acquired).toISOString().split('T')[0] : ''"
+      :model-value="
+        film.date_acquired
+          ? new Date(film.date_acquired).toISOString().split('T')[0]
+          : ''
+      "
       @update:model-value="updateField('date_acquired', $event)"
       label="Date Acquired"
       type="date"

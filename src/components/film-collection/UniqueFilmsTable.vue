@@ -95,8 +95,8 @@ const headers = [
           item.totalQuantity - item.totalUsed === 0
             ? 'text-error'
             : item.totalQuantity - item.totalUsed < 3
-            ? 'text-warning'
-            : 'text-success'
+              ? 'text-warning'
+              : 'text-success'
         "
       >
         {{ item.totalQuantity - item.totalUsed }}

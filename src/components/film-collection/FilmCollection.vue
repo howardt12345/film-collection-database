@@ -44,10 +44,10 @@ const uniqueNames = computed(() => {
       acc[film.name] = (acc[film.name] || 0) + 1;
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
   return Object.keys(nameFrequency).sort(
-    (a, b) => nameFrequency[b] - nameFrequency[a]
+    (a, b) => nameFrequency[b] - nameFrequency[a],
   );
 });
 
@@ -57,35 +57,38 @@ const uniqueBrands = computed(() => {
       acc[film.brand] = (acc[film.brand] || 0) + 1;
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
   return Object.keys(brandFrequency).sort(
-    (a, b) => brandFrequency[b] - brandFrequency[a]
+    (a, b) => brandFrequency[b] - brandFrequency[a],
   );
 });
 
 const uniqueSources = computed(() => {
   const sourceFrequency = filmCollections.value
     .filter((film) => film.source)
-    .reduce((acc: Record<string, number>, film) => {
-      acc[film.source] = (acc[film.source] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    .reduce(
+      (acc: Record<string, number>, film) => {
+        acc[film.source] = (acc[film.source] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   return Object.keys(sourceFrequency).sort(
-    (a, b) => sourceFrequency[b] - sourceFrequency[a]
+    (a, b) => sourceFrequency[b] - sourceFrequency[a],
   );
 });
 
 const uniqueEvents = computed(() =>
   Array.from(new Set(filmEvents.value.map((event) => event.event_type)))
     .filter(Boolean)
-    .sort()
+    .sort(),
 );
 
 const uniqueLocations = computed(() =>
   Array.from(new Set(filmEvents.value.map((event) => event.location)))
     .filter(Boolean)
-    .sort()
+    .sort(),
 );
 
 onMounted(async () => {
@@ -93,19 +96,22 @@ onMounted(async () => {
   filmEvents.value = await getEvents();
 
   // Populate eventsByFilm from filmEvents
-  eventsByFilm.value = filmEvents.value.reduce((acc, event) => {
-    event.film_ids.forEach((filmId) => {
-      if (!acc[filmId]) acc[filmId] = [];
-      acc[filmId].push({
-        id: event.id,
-        date: event.date,
-        event_type: event.event_type,
-        location: event.location,
-        notes: event.notes,
+  eventsByFilm.value = filmEvents.value.reduce(
+    (acc, event) => {
+      event.film_ids.forEach((filmId) => {
+        if (!acc[filmId]) acc[filmId] = [];
+        acc[filmId].push({
+          id: event.id,
+          date: event.date,
+          event_type: event.event_type,
+          location: event.location,
+          notes: event.notes,
+        });
       });
-    });
-    return acc;
-  }, {} as Record<number, Event[]>);
+      return acc;
+    },
+    {} as Record<number, Event[]>,
+  );
 });
 
 const createNewFilm = async (newFilm: FilmEntry) => {
@@ -155,7 +161,7 @@ const deleteFilm = async () => {
   if (filmToDelete.value) {
     await deleteFilmCollection(filmToDelete.value.id);
     filmCollections.value = filmCollections.value.filter(
-      (f) => f.id !== filmToDelete.value!.id
+      (f) => f.id !== filmToDelete.value!.id,
     );
     filmToDelete.value = null;
     deleteDialogVisible.value = false;
@@ -191,11 +197,11 @@ const handleDeleteEvent = async () => {
     eventToDelete.value!.film_ids.forEach((filmId) => {
       eventsByFilm.value[filmId] =
         eventsByFilm.value[filmId]?.filter(
-          (e) => e.id !== eventToDelete.value!.eventId
+          (e) => e.id !== eventToDelete.value!.eventId,
         ) || [];
     });
     filmEvents.value = filmEvents.value.filter(
-      (e) => e.id !== eventToDelete.value!.eventId
+      (e) => e.id !== eventToDelete.value!.eventId,
     );
     deleteDialogVisible.value = false;
     eventToDelete.value = null;
@@ -221,7 +227,7 @@ const handleRemoveEventFromFilm = async (filmId: number, eventId: number) => {
 
 const handleAddExistingEventToFilm = async (
   filmId: number,
-  eventId: number
+  eventId: number,
 ) => {
   await addExistingEventToFilm(filmId, eventId);
   const event = filmEvents.value.find((e) => e.id === eventId);
@@ -242,7 +248,7 @@ const handleAddExistingEventToFilm = async (
 
 const handleCreateAndAddEventToFilm = async (
   filmId: number,
-  event: Omit<Event, "id">
+  event: Omit<Event, "id">,
 ) => {
   const newEvent = await createFilmEvent(filmId, event);
   // Update eventsByFilm
@@ -318,7 +324,7 @@ const handleEditFilmsOnEvent = async (eventId: number, filmIds: number[]) => {
 
 const handleCreateEvent = async (
   event: Omit<Event, "id">,
-  filmIds: number[]
+  filmIds: number[],
 ) => {
   let newEvent: Event;
 

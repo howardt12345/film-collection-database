@@ -5,12 +5,12 @@ const enumKeyFromValue = (enumObject: any, value: any) =>
 
 export const convertEnumValuesToKeys = <T>(
   obj: T,
-  enumTypes: Record<string, any>
+  enumTypes: Record<string, any>,
 ): T => {
   if (Array.isArray(obj)) {
     // Recursively process each element if the value is an array
     return obj.map((item) =>
-      convertEnumValuesToKeys(item, enumTypes)
+      convertEnumValuesToKeys(item, enumTypes),
     ) as unknown as T;
   } else if (typeof obj === "object" && obj !== null) {
     const newObj: any = { ...obj };
@@ -34,10 +34,10 @@ export const convertEnumValuesToKeys = <T>(
 export const getSortedEventLog = (eventLog: Event[] | undefined) => {
   if (!eventLog) return [];
   return [...eventLog].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 };
 
 export const formatDate = (date: Date) => {
-  return date.toISOString().split('T')[0];
-}
+  return date.toISOString().split("T")[0];
+};
