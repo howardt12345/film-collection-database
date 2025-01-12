@@ -316,3 +316,42 @@ export const editFilmsOnEvent = async (
     if (addError) throw addError;
   }
 };
+
+export const deleteEvent = async (eventId: number): Promise<void> => {
+  // First delete all associations in film_entry_events
+  const { error: linkError } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (linkError) throw linkError;
+
+  // Then delete the event itself
+  const { error: eventError } = await supabase
+    .schema("film_collection")
+    .from("film_events")
+    .delete()
+    .eq("id", eventId);
+
+  if (eventError) throw eventError;
+};
+
+export const createEventWithoutFilm = async (
+  event: Omit<Event, "id">
+): Promise<Event> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("film_events")
+    .insert([{
+      date: event.date,
+      event_type: event.event_type,
+      location: event.location,
+      notes: event.notes
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};

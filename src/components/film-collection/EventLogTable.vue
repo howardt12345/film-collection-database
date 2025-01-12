@@ -9,6 +9,7 @@ import EditEventDialog from "./EditEventDialog.vue";
 const props = defineProps<{
   events: (Event & { film_ids: number[] })[];
   uniqueEvents: string[];
+  uniqueLocations: string[];
   films: FilmEntry[];
 }>();
 
@@ -18,6 +19,7 @@ const emit = defineEmits<{
   (e: "updateEvent", eventId: number, event: Omit<Event, "id">): void;
   (e: "removeEvent", eventId: number): void;
   (e: "editFilmsOnEvent", eventId: number, filmIds: number[]): void;
+  (e: "addEvent", filmId: number, event: Omit<Event, "id">): void;
 }>();
 
 const eventHeaders = [
@@ -83,6 +85,23 @@ const handleDelete = () => {
     eventToDelete.value = null;
   }
 };
+
+const copyDialog = ref(false);
+const copyingEvent = ref<Event | null>(null);
+
+const openCopyDialog = (event: Event) => {
+  copyingEvent.value = {
+    ...event,
+    date: new Date(),
+  };
+  copyDialog.value = true;
+};
+
+const handleCopy = (newEvent: Omit<Event, "id">, filmIds: number[]) => {
+  emit("addEvent", filmIds[0], newEvent);
+  copyDialog.value = false;
+  copyingEvent.value = null;
+};
 </script>
 
 <template>
@@ -123,24 +142,44 @@ const handleDelete = () => {
     </template>
 
     <template v-slot:item.actions="{ item }">
-      <div class="d-flex gap-2">
-        <v-btn icon size="small" color="primary" @click="openEditDialog(item)">
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn icon size="small" color="error" @click="confirmDelete(item)">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </div>
+      <v-menu>
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props" size="small" elevation="0">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="openEditDialog(item)">
+            <v-list-item-title>
+              <v-icon>mdi-pencil</v-icon>
+              <span class="ml-2">Edit</span>
+            </v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="openCopyDialog(item)">
+            <v-list-item-title>
+              <v-icon>mdi-content-copy</v-icon>
+              <span class="ml-2">Copy</span>
+            </v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="confirmDelete(item)">
+            <v-list-item-title>
+              <v-icon>mdi-delete</v-icon>
+              <span class="ml-2">Delete</span>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </template>
   </v-data-table>
 
   <EditEventDialog
-    v-model="editDialog"
-    :event="editingEvent"
+    v-model="copyDialog"
+    :event="copyingEvent"
     :unique-events="uniqueEvents"
+    :unique-locations="uniqueLocations"
     :films="films"
-    :associated-film-ids="editingEvent ? getAssociatedFilms(editingEvent.id).map(f => f.id) : []"
-    @save="handleSaveEdit"
+    :associated-film-ids="[]"
+    @save="handleCopy"
   />
 
   <v-dialog v-model="deleteDialog" max-width="500">
