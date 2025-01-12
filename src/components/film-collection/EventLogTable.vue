@@ -126,7 +126,7 @@ const cancelEdit = () => {
     :headers="eventHeaders"
     :items="sortedEvents"
     class="elevation-1"
-    items-per-page="10"
+    :items-per-page="25"
   >
     <template v-slot:top>
       <v-row class="ma-2">
@@ -176,14 +176,12 @@ const cancelEdit = () => {
                       <v-chip
                         size="small"
                         :color="getBrandColor(item.raw.brand)"
-                        :text-color="getBrandColor(item.raw.brand) ? 'white' : ''"
                       >
                         {{ item.raw.brand }}
                       </v-chip>
                       <v-chip
                         size="small"
                         :color="getFilmNameColor(item.raw.name)"
-                        :text-color="getFilmNameColor(item.raw.name) ? 'white' : ''"
                       >
                         {{ item.raw.name }}
                       </v-chip>
@@ -275,14 +273,12 @@ const cancelEdit = () => {
                     <v-chip
                       size="small"
                       :color="getBrandColor(item.raw.brand)"
-                      :text-color="getBrandColor(item.raw.brand) ? 'white' : ''"
                     >
                       {{ item.raw.brand }}
                     </v-chip>
                     <v-chip
                       size="small"
                       :color="getFilmNameColor(item.raw.name)"
-                      :text-color="getFilmNameColor(item.raw.name) ? 'white' : ''"
                     >
                       {{ item.raw.name }}
                     </v-chip>
@@ -294,13 +290,13 @@ const cancelEdit = () => {
         </v-select>
       </template>
       <template v-else>
-        <div class="d-flex flex-wrap gap-1">
+        <div class="d-flex flex-wrap gap-1 my-2">
           <v-chip
             v-for="film in getAssociatedFilms(item.id)"
             :key="film.id"
+            class="ma-1"
             size="small"
-            :color="getFilmNameColor(film.name)"
-            :text-color="getFilmNameColor(film.name) ? 'white' : ''"
+            :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
           >
             {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
           </v-chip>

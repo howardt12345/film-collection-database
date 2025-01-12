@@ -175,6 +175,7 @@ const allEvents = computed(() =>
       v-model:expanded="expandedItem"
       @update:expanded="handleExpand"
       :search="search"
+      :items-per-page="25"
     >
       <template #item.actions="{ item }">
         <v-menu>
