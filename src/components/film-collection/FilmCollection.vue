@@ -79,6 +79,12 @@ const uniqueEvents = computed(() =>
     .sort()
 );
 
+const uniqueLocations = computed(() =>
+  Array.from(new Set(filmEvents.value.map((event) => event.location)))
+    .filter(Boolean)
+    .sort()
+);
+
 onMounted(async () => {
   filmCollections.value = await getFilmCollections();
   filmEvents.value = await getEvents();
@@ -312,6 +318,24 @@ const handleCreateEvent = async (
   filmEvents.value = await getEvents();
   createEventDialogVisible.value = false;
 };
+
+const handleRemoveEvent = async (eventId: number) => {
+  // Get all films associated with this event
+  const event = filmEvents.value.find(e => e.id === eventId);
+  if (!event) return;
+
+  // Delete event from all associated films
+  for (const filmId of event.film_ids) {
+    await deleteFilmEvent(filmId, eventId);
+
+    // Update eventsByFilm
+    eventsByFilm.value[filmId] =
+      eventsByFilm.value[filmId]?.filter(e => e.id !== eventId) || [];
+  }
+
+  // Update filmEvents
+  filmEvents.value = filmEvents.value.filter(e => e.id !== eventId);
+};
 </script>
 
 <template>
@@ -354,6 +378,7 @@ const handleCreateEvent = async (
           :uniqueEvents="uniqueEvents"
           @update-event="handleUpdateEvent"
           @edit-films-on-event="handleEditFilmsOnEvent"
+          @remove-event="handleRemoveEvent"
         />
       </v-window-item>
     </v-window>
@@ -389,6 +414,7 @@ const handleCreateEvent = async (
       v-model="createEventDialogVisible"
       :event="null"
       :unique-events="uniqueEvents"
+      :unique-locations="uniqueLocations"
       :films="filmCollections"
       :associated-film-ids="[]"
       @save="handleCreateEvent"

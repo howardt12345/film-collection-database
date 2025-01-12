@@ -67,6 +67,22 @@ const handleSaveEdit = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
     emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
   }
 };
+
+const deleteDialog = ref(false);
+const eventToDelete = ref<Event | null>(null);
+
+const confirmDelete = (event: Event) => {
+  eventToDelete.value = event;
+  deleteDialog.value = true;
+};
+
+const handleDelete = () => {
+  if (eventToDelete.value) {
+    emit("removeEvent", eventToDelete.value.id);
+    deleteDialog.value = false;
+    eventToDelete.value = null;
+  }
+};
 </script>
 
 <template>
@@ -111,6 +127,9 @@ const handleSaveEdit = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
         <v-btn icon size="small" color="primary" @click="openEditDialog(item)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
+        <v-btn icon size="small" color="error" @click="confirmDelete(item)">
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
       </div>
     </template>
   </v-data-table>
@@ -123,4 +142,18 @@ const handleSaveEdit = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
     :associated-film-ids="editingEvent ? getAssociatedFilms(editingEvent.id).map(f => f.id) : []"
     @save="handleSaveEdit"
   />
+
+  <v-dialog v-model="deleteDialog" max-width="500">
+    <v-card>
+      <v-card-title class="headline">Confirm Delete</v-card-title>
+      <v-card-text>
+        Are you sure you want to delete this event? This will remove it from all associated films.
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="secondary" @click="deleteDialog = false">Cancel</v-btn>
+        <v-btn color="error" @click="handleDelete">Delete</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>

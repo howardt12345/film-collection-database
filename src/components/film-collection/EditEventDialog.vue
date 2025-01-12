@@ -8,6 +8,7 @@ const props = defineProps<{
   modelValue: boolean;
   event: Event | null;
   uniqueEvents: string[];
+  uniqueLocations: string[];
   films: FilmEntry[];
   associatedFilmIds: number[];
 }>();
@@ -60,7 +61,7 @@ const saveEvent = () => {
         <v-row>
           <v-col cols="6">
             <v-text-field
-              v-model="editingEvent.date"
+              :model-value="editingEvent.date ? new Date(editingEvent.date).toISOString().split('T')[0] : ''"
               label="Event Date"
               type="date"
               density="comfortable"
@@ -75,11 +76,14 @@ const saveEvent = () => {
             ></v-combobox>
           </v-col>
           <v-col cols="12">
-            <v-text-field
+            <v-combobox
               v-model="editingEvent.location"
+              :items="uniqueLocations"
               label="Location"
               density="comfortable"
-            ></v-text-field>
+              clearable
+              allow-new-values
+            ></v-combobox>
           </v-col>
           <v-col cols="12">
             <v-textarea
