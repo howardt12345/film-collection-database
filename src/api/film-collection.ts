@@ -1,36 +1,50 @@
 import { FilmEntry, Event } from "@/types/film-collection";
 import { supabase } from "./supabase";
 
+type DateToString<T> = {
+  [K in keyof T]: T[K] extends Date ? string : T[K];
+};
+
+type FilmEntryBase = Omit<FilmEntry, 'created_at' | 'date_acquired' | 'latest_event'>;
+type FilmEntryResponse = DateToString<FilmEntryBase> & {
+  created_at: string;
+  date_acquired: string;
+  film_entry_events: {
+    film_events: DateToString<Event>;
+  }[];
+};
+
 export const getFilmCollections = async (): Promise<FilmEntry[]> => {
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_entry")
     .select(`
       *,
-      latest_event:film_entry_events(
-        event:film_events(
+      film_entry_events(
+        film_events(
+          id,
           date,
-          event_type
+          event_type,
+          notes
         )
       )
     `)
-    .order("date", { ascending: false, foreignTable: "film_entry_events.event" })
-    .limit(1, { foreignTable: "film_entry_events" });
+    .order('date_acquired', { ascending: false })
+    .returns<FilmEntryResponse[]>();
 
-  if (error) {
-    console.error("Error fetching film collections:", error);
-    throw error;
-  }
+  if (error) throw error;
 
-  // Transform the data to match FilmEntry type
-  return data.map(item => ({
-    ...item,
-    latest_event: item.latest_event?.[0]?.event ? {
-      date: new Date(item.latest_event[0].event.date),
-      event_type: item.latest_event[0].event.event_type
-    } : undefined,
-    created_at: new Date(item.created_at),
-    date_acquired: new Date(item.date_acquired)
+  return data.map(entry => ({
+    ...entry,
+    latest_event: entry.film_entry_events
+      ?.map(fee => ({
+        ...fee.film_events,
+        date: new Date(fee.film_events.date)
+      }))
+      ?.filter(Boolean)
+      ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0] || null,
+    created_at: new Date(entry.created_at),
+    date_acquired: new Date(entry.date_acquired)
   }));
 };
 
@@ -96,27 +110,51 @@ export const deleteFilmCollection = async (id: number): Promise<void> => {
   }
 };
 
-export const getFilmEvents = async (filmId: number): Promise<Event[]> => {
+export const getEvents = async (): Promise<(Event & { film_ids: number[] })[]> => {
+  // First get all events
+  const { data: events, error: eventsError } = await supabase
+    .schema("film_collection")
+    .from("film_events")
+    .select("*");
+
+  if (eventsError) throw eventsError;
+
+  // Then get all film-event associations
+  const { data: associations, error: associationsError } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .select("*");
+
+  if (associationsError) throw associationsError;
+
+  // Map the associations to the events
+  return events.map(event => ({
+    ...event,
+    date: new Date(event.date),
+    film_ids: associations
+      .filter(assoc => assoc.event_id === event.id)
+      .map(assoc => assoc.film_entry_id)
+  }));
+};
+
+export const getEventsForFilm = async (filmId: number): Promise<Event[]> => {
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
     .select(`
-      event:film_events(
-        id,
-        date,
-        event_type,
-        notes
-      )
+      event:film_events(*)
     `)
     .eq("film_entry_id", filmId)
-    .order("date", { foreignTable: "film_events", ascending: false });
+    .returns<{ event: Event }[]>();
 
-  if (error) {
-    console.error("Error fetching film events:", error);
-    throw error;
-  }
+  if (error) throw error;
 
-  return data.flatMap(row => row.event);
+  return data
+    .filter(Boolean)
+    .map(item => ({
+      ...item.event,
+      date: new Date(item.event.date),
+    }));
 };
 
 export const createFilmEvent = async (
@@ -232,4 +270,58 @@ export const deleteFilmEvent = async (
 
     if (eventError) throw eventError;
   }
+};
+
+export const addFilmToEvent = async (
+  filmId: number,
+  eventId: number
+): Promise<void> => {
+  // Check if association already exists
+  const { data: existing, error: checkError } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .select("*")
+    .eq("film_entry_id", filmId)
+    .eq("event_id", eventId);
+
+  if (checkError) throw checkError;
+  if (existing && existing.length > 0) return; // Already exists
+
+  // Create new association
+  const { error } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .insert([{
+      film_entry_id: filmId,
+      event_id: eventId
+    }]);
+
+  if (error) throw error;
+};
+
+export const addExistingEventToFilm = async (
+  filmId: number,
+  eventId: number
+): Promise<void> => {
+  // Check if association already exists
+  const { data: existing, error: checkError } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .select("*")
+    .eq("film_entry_id", filmId)
+    .eq("event_id", eventId);
+
+  if (checkError) throw checkError;
+  if (existing && existing.length > 0) return; // Already exists
+
+  // Create new association
+  const { error } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .insert([{
+      film_entry_id: filmId,
+      event_id: eventId
+    }]);
+
+  if (error) throw error;
 };

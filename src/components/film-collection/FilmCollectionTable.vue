@@ -12,6 +12,8 @@ import {
   subMonths,
   addMonths,
 } from "date-fns";
+import { getBrandColor, getFilmNameColor } from "@/utils/colors";
+import AddEventToFilmDialog from "./AddEventToFilmDialog.vue";
 
 const props = defineProps<{
   films: FilmEntry[];
@@ -23,9 +25,9 @@ const emit = defineEmits<{
   (e: "edit", film: FilmEntry): void;
   (e: "copy", film: FilmEntry): void;
   (e: "delete", film: FilmEntry): void;
-  (e: "addEvent", filmId: number, event: Event): void;
-  (e: "editEvent", filmId: number, eventId: number, updatedEvent: Event): void;
-  (e: "deleteEvent", filmId: number, eventId: number): void;
+  (e: "removeEventFromFilm", filmId: number, eventId: number): void;
+  (e: "addExistingEventToFilm", filmId: number, eventId: number): void;
+  (e: "createAndAddEventToFilm", filmId: number, event: Omit<Event, "id">): void;
   (e: "updateUsed", filmId: number, used: number): void;
   (e: "fetchEvents", filmId: number): void;
 }>();
@@ -45,12 +47,15 @@ const filmHeaders = [
 
 const search = ref("");
 
-const expandedItem = ref<number[]>([]);
+const expandedItem = ref<string[]>([]);
 
-const handleExpand = async (expanded: number[]) => {
+const addEventDialog = ref(false);
+const selectedFilmForEvent = ref<FilmEntry | null>(null);
+
+const handleExpand = async (expanded: string[]) => {
   if (!expanded || expanded.length === 0) return;
 
-  const itemId = expanded[expanded.length - 1];
+  const itemId = Number(expanded[expanded.length - 1]);
   if (itemId && !props.eventsByFilm[itemId]) {
     emit('fetchEvents', itemId);
   }
@@ -62,63 +67,6 @@ const updateUsed = (item: FilmEntry, increment: number) => {
     Math.min(item.quantity ?? 0, (item.used ?? 0) + increment)
   );
   emit("updateUsed", item.id, newUsed);
-};
-
-const getBrandColor = (brand: string) => {
-  const brandColors: { [key: string]: string } = {
-    'Kodak': 'yellow darken-2',
-    'Fuji': 'green darken-2',
-    'Cinestill': 'red darken-2',
-    'Konica': 'blue darken-2',
-    'Ilford': 'grey darken-3',
-    'Lomo': 'purple darken-2',
-    'Harman': 'orange darken-2',
-    'Popho': 'pink lighten-2'
-  };
-
-  const lowercaseBrand = brand.toLowerCase();
-  for (const [key, color] of Object.entries(brandColors)) {
-    if (lowercaseBrand.includes(key.toLowerCase())) {
-      return color;
-    }
-  }
-  return '';
-};
-
-// Updated function to determine film name color using partial matching
-const getFilmNameColor = (name: string) => {
-  const nameColors: { [key: string]: string } = {
-    'ColorPlus': 'amber lighten-2',
-    'Acros': 'grey lighten-3',
-    'Superia': 'green lighten-2',
-    'Provia': 'blue lighten-2',
-    'Velvia': 'red accent-2',
-    'Astia': 'orange lighten-2',
-    'NPH': 'deep-purple lighten-3',
-    'Ektachrome': 'cyan lighten-2',
-    'Centuria': 'purple lighten-2',
-    'Fujicolor': 'light-green lighten-2',
-    'Pro 400H': 'teal lighten-2',
-    'Ultramax': 'blue lighten-2',
-    'Portra': 'pink lighten-3',
-    'Ektar': 'red lighten-2',
-    '800T': 'light-blue lighten-2',
-    '400D': 'deep-purple lighten-2',
-    'T-Max': 'blue-grey lighten-2',
-    'Pan F': 'grey darken-1',
-    'Kentmere': 'brown lighten-2',
-    'Simply Ace': 'lime lighten-2',
-    'Berlin': 'grey darken-2',
-    'Metropolis': 'amber darken-2'
-  };
-
-  const lowercaseName = name.toLowerCase();
-  for (const [key, color] of Object.entries(nameColors)) {
-    if (lowercaseName.includes(key.toLowerCase())) {
-      return color;
-    }
-  }
-  return '';
 };
 
 // Function to get the number of months until the expiry date
@@ -179,6 +127,30 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
     return isBefore(expiry, tenYearsAgo) ? "text-error" : "text-warning"; // More than 10 years ago -> text-error, otherwise text-warning
   }
 };
+
+const openAddEventDialog = (film: FilmEntry) => {
+  selectedFilmForEvent.value = film;
+  addEventDialog.value = true;
+};
+
+const handleEventAdd = (eventId: number) => {
+  if (selectedFilmForEvent.value) {
+    emit('addExistingEventToFilm', selectedFilmForEvent.value.id, eventId);
+  }
+};
+
+const handleEventCreate = (event: Omit<Event, "id">) => {
+  if (selectedFilmForEvent.value) {
+    emit('createAndAddEventToFilm', selectedFilmForEvent.value.id, event);
+  }
+};
+
+const allEvents = computed(() =>
+  Object.values(props.eventsByFilm).flat().map(event => ({
+    ...event,
+    film_ids: [] // Add film_ids property
+  }))
+);
 
 </script>
 
@@ -272,9 +244,8 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
           </template>
         </v-tooltip>
       </template>
-
       <template #item.latest_event.date="{ item }">
-        {{ formatDate(item.latest_event?.date) || "N/A" }}
+        {{ item.latest_event?.date ? formatDate(item.latest_event.date) : "N/A" }}
       </template>
 
       <template #item.used="{ item }">
@@ -360,14 +331,19 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
               <v-row>
                 <v-col cols="1" />
                 <v-col cols="11">
-                  <h3>Event Log</h3>
+                  <div class="d-flex justify-space-between align-center mb-4">
+                    <h3>Event Log</h3>
+                    <v-btn
+                      color="primary"
+                      size="small"
+                      @click="openAddEventDialog(item)"
+                    >
+                      Add Event
+                    </v-btn>
+                  </div>
                   <EventLogTable
                     :events="eventsByFilm[item.id] || []"
-                    :unique-events="uniqueEvents"
-                    @add-event="(event: Event) => emit('addEvent', item.id, event)"
-                    @edit-event="(eventId: number, updatedEvent: Event) =>
-                      emit('editEvent', item.id, eventId, updatedEvent)"
-                    @delete-event="(eventId: number) => emit('deleteEvent', item.id, eventId)"
+                    @remove-event="(eventId) => emit('removeEventFromFilm', item.id, eventId)"
                   />
                 </v-col>
               </v-row>
@@ -376,5 +352,13 @@ const getExpiryDateClass = (expiryDate: string | undefined) => {
         </tr>
       </template>
     </v-data-table>
+
+    <AddEventToFilmDialog
+      v-model="addEventDialog"
+      :existing-events="allEvents"
+      :unique-events="uniqueEvents"
+      @select-event="handleEventAdd"
+      @create-event="handleEventCreate"
+    />
   </v-card>
 </template>

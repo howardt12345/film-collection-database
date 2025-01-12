@@ -16,6 +16,7 @@ export type Event = {
   id: number,
   date: Date,
   event_type: string,
+  location: string,
   notes: string
 }
 
