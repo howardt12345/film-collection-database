@@ -95,10 +95,29 @@ const createNewFilm = async (newFilm: FilmEntry) => {
   await createFilmEvent(data.id, {
     date: newFilm.date_acquired,
     event_type: "Acquired",
-    location: newFilm.source,
+    location: newFilm.source || "",
     notes: "",
   });
-  filmCollections.value.push(data);
+
+  // Fetch the latest events for this film
+  await handleFetchEvents(data.id);
+
+  // Add the film to the collection with its latest event
+  const filmWithEvent = {
+    ...data,
+    created_at: new Date(data.created_at),
+    date_acquired: new Date(data.date_acquired),
+    latest_event: eventsByFilm.value[data.id]?.[0]
+      ? {
+          ...eventsByFilm.value[data.id][0],
+          date: new Date(eventsByFilm.value[data.id][0].date)
+        }
+      : null,
+    used: data.used || 0,
+    quantity: data.quantity || 1
+  };
+
+  filmCollections.value.unshift(filmWithEvent as FilmEntry);
   createDialogVisible.value = false;
 };
 
@@ -237,10 +256,6 @@ const handleCreateEvent = async (
   filmEvents.value = await getEvents();
   createEventDialogVisible.value = false;
 };
-
-const emit = defineEmits<{
-  (e: "addFilmToEvent", filmId: number, eventId: number): void;
-}>();
 </script>
 
 <template>

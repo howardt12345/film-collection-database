@@ -161,18 +161,20 @@ export const createFilmEvent = async (
   filmId: number,
   event: Omit<Event, "id">
 ): Promise<Event> => {
-  // Check if an identical event already exists
+  // Check if an identical "Acquired" event exists with matching date and location
   const { data: existingEvents } = await supabase
     .schema("film_collection")
     .from("film_events")
     .select("id")
     .eq("date", event.date)
-    .eq("event_type", event.event_type);
+    .eq("event_type", event.event_type)
+    .eq("location", event.location)
+    .eq("event_type", "Acquired");
 
   let eventId: number;
 
   if (existingEvents && existingEvents.length > 0) {
-    // Use existing event
+    // Use existing Acquired event
     eventId = existingEvents[0].id;
   } else {
     // Create new event
@@ -182,6 +184,7 @@ export const createFilmEvent = async (
       .insert([{
         date: event.date,
         event_type: event.event_type,
+        location: event.location,
         notes: event.notes
       }])
       .select()
