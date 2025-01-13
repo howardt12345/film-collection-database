@@ -419,7 +419,7 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
       <v-tab value="2">Unique Films</v-tab>
     </v-tabs>
 
-    <v-window v-model="currentTab">
+    <v-window v-model="currentTab" :touch="false">
       <v-window-item value="0">
         <FilmCollectionTable
           :films="filmCollections"
