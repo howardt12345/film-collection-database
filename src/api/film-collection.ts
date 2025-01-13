@@ -76,10 +76,18 @@ export const updateFilmCollection = async (
   id: number,
   updatedData: Partial<FilmEntry>,
 ): Promise<FilmEntry> => {
+  // Clean the data before sending to API
+  const {
+    film_entry_events,
+    latest_event,
+    created_at,
+    ...cleanData
+  } = updatedData as any;
+
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_entry")
-    .update(updatedData)
+    .update(cleanData)
     .eq("id", id)
     .select()
     .single();
