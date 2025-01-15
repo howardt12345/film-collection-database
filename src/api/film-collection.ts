@@ -1,4 +1,4 @@
-import { FilmEntry, Event } from "@/types/film-collection";
+import { FilmEntry, Event, FilmEvent } from "@/types/film-collection";
 import { supabase } from "./supabase";
 
 type DateToString<T> = {
@@ -77,12 +77,8 @@ export const updateFilmCollection = async (
   updatedData: Partial<FilmEntry>,
 ): Promise<FilmEntry> => {
   // Clean the data before sending to API
-  const {
-    film_entry_events,
-    latest_event,
-    created_at,
-    ...cleanData
-  } = updatedData as any;
+  const { film_entry_events, latest_event, created_at, ...cleanData } =
+    updatedData as any;
 
   const { data, error } = await supabase
     .schema("film_collection")
@@ -123,9 +119,7 @@ export const deleteFilmCollection = async (id: number): Promise<void> => {
   }
 };
 
-export const getEvents = async (): Promise<
-  (Event & { film_ids: number[] })[]
-> => {
+export const getEvents = async (): Promise<FilmEvent[]> => {
   // First get all events
   const { data: events, error: eventsError } = await supabase
     .schema("film_collection")

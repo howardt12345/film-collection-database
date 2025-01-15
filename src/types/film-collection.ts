@@ -12,7 +12,7 @@ export enum FilmFormat {
   _600 = "600",
 }
 
-export type Event = {
+export interface Event {
   id: number;
   date: Date;
   event_type: string;
@@ -20,7 +20,11 @@ export type Event = {
   notes: string;
 };
 
-export type FilmEntry = {
+export interface FilmEvent extends Event {
+  film_ids: number[];
+}
+
+export interface FilmEntry {
   id: number;
   created_at: Date;
   date_acquired: Date;

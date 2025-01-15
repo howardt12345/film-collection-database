@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Event } from "@/types/film-collection";
+import { Event, FilmEvent } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 
 const props = defineProps<{
   modelValue: boolean;
-  existingEvents: (Event & { film_ids: number[] })[];
+  existingEvents: FilmEvent[];
   uniqueEvents: string[];
 }>();
 

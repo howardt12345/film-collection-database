@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { FilmEntry, Event } from "@/types/film-collection";
+import { FilmEntry, FilmEvent, Event } from "@/types/film-collection";
 import {
   getFilmCollections,
   createFilmCollection,
@@ -23,7 +23,7 @@ import EditEventDialog from "./EditEventDialog.vue";
 import UniqueFilmsTable from "./UniqueFilmsTable.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
-const filmEvents = ref<(Event & { film_ids: number[] })[]>([]);
+const filmEvents = ref<FilmEvent[]>([]);
 const eventsByFilm = ref<Record<number, Event[]>>({});
 const createDialogVisible = ref(false);
 const editDialogVisible = ref(false);

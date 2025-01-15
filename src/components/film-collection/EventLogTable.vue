@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Event, FilmEntry } from "@/types/film-collection";
+import { Event, FilmEntry, FilmEvent } from "@/types/film-collection";
 import VueMarkdown from "vue-markdown-render";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
 import { formatDate } from "@/utils";
 import EditEventDialog from "./EditEventDialog.vue";
 
 const props = defineProps<{
-  events: (Event & { film_ids: number[] })[];
+  events: FilmEvent[];
   uniqueEvents: string[];
   uniqueLocations: string[];
   films: FilmEntry[];
@@ -49,7 +49,7 @@ const getAssociatedFilms = (eventId: number) => {
   return props.films.filter((film) => event.film_ids.includes(film.id));
 };
 
-const openEditDialog = (event: Event & { film_ids: number[] }) => {
+const openEditDialog = (event: FilmEvent) => {
   editingEvent.value = event;
   editingEventFilmIds.value = event.film_ids;
   editDialog.value = true;
@@ -75,7 +75,7 @@ const copyDialog = ref(false);
 const copyingEvent = ref<Event | null>(null);
 const copyingEventFilmIds = ref<number[]>([]);
 
-const openCopyDialog = (event: Event & { film_ids: number[] }) => {
+const openCopyDialog = (event: FilmEvent) => {
   copyingEvent.value = {
     ...event,
     date: new Date(),
