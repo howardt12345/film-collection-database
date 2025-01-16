@@ -7,20 +7,20 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AddEventToFilmDialog: typeof import('./src/components/film-collection/AddEventToFilmDialog.vue')['default']
+    AddEventToFilmDialog: typeof import('./src/components/film-collection/film/AddEventToFilmDialog.vue')['default']
     Auth: typeof import('./src/components/Auth.vue')['default']
-    CameraForm: typeof import('./src/components/film-collection/CameraForm.vue')['default']
-    CameraTable: typeof import('./src/components/film-collection/CameraTable.vue')['default']
-    CreateCameraDialog: typeof import('./src/components/film-collection/CreateCameraDialog.vue')['default']
-    CreateFilmDialog: typeof import('./src/components/film-collection/CreateFilmDialog.vue')['default']
-    EditCameraDialog: typeof import('./src/components/film-collection/EditCameraDialog.vue')['default']
-    EditEventDialog: typeof import('./src/components/film-collection/EditEventDialog.vue')['default']
-    EditFilmDialog: typeof import('./src/components/film-collection/EditFilmDialog.vue')['default']
-    EventLogTable: typeof import('./src/components/film-collection/EventLogTable.vue')['default']
+    CameraForm: typeof import('./src/components/film-collection/camera/CameraForm.vue')['default']
+    CameraTable: typeof import('./src/components/film-collection/camera/CameraTable.vue')['default']
+    CreateCameraDialog: typeof import('./src/components/film-collection/camera/CreateCameraDialog.vue')['default']
+    CreateFilmDialog: typeof import('./src/components/film-collection/film/CreateFilmDialog.vue')['default']
+    EditCameraDialog: typeof import('./src/components/film-collection/camera/EditCameraDialog.vue')['default']
+    EditEventDialog: typeof import('./src/components/film-collection/event/EditEventDialog.vue')['default']
+    EditFilmDialog: typeof import('./src/components/film-collection/film/EditFilmDialog.vue')['default']
+    EventLogTable: typeof import('./src/components/film-collection/event/EventLogTable.vue')['default']
     FilmCollection: typeof import('./src/components/film-collection/FilmCollection.vue')['default']
-    FilmEntryTable: typeof import('./src/components/film-collection/FilmEntryTable.vue')['default']
-    FilmEventLogTable: typeof import('./src/components/film-collection/FilmEventLogTable.vue')['default']
-    FilmForm: typeof import('./src/components/film-collection/FilmForm.vue')['default']
+    FilmEntryTable: typeof import('./src/components/film-collection/film/FilmEntryTable.vue')['default']
+    FilmEventLogTable: typeof import('./src/components/film-collection/film/FilmEventLogTable.vue')['default']
+    FilmForm: typeof import('./src/components/film-collection/film/FilmForm.vue')['default']
     UniqueFilmsTable: typeof import('./src/components/film-collection/UniqueFilmsTable.vue')['default']
   }
 }

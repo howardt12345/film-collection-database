@@ -20,11 +20,11 @@ import {
   deleteCamera,
   editEventCameras,
 } from "@/api/film-collection";
-import FilmCollectionTable from "./FilmEntryTable.vue";
-import CreateFilmDialog from "./CreateFilmDialog.vue";
-import EditFilmDialog from "./EditFilmDialog.vue";
-import EventLogTable from "./EventLogTable.vue";
-import EditEventDialog from "./EditEventDialog.vue";
+import FilmCollectionTable from "./film/FilmEntryTable.vue";
+import CreateFilmDialog from "./film/CreateFilmDialog.vue";
+import EditFilmDialog from "./film/EditFilmDialog.vue";
+import EventLogTable from "./event/EventLogTable.vue";
+import EditEventDialog from "./event/EditEventDialog.vue";
 import UniqueFilmsTable from "./UniqueFilmsTable.vue";
 import CameraTable from "./CameraTable.vue";
 import CreateCameraDialog from "./CreateCameraDialog.vue";
