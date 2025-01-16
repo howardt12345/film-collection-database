@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { FilmEntry, FilmEvent, Event } from "@/types/film-collection";
+import { FilmEntry, FilmEvent, Event, Camera } from "@/types/film-collection";
 import {
   getFilmCollections,
   createFilmCollection,
@@ -14,6 +14,11 @@ import {
   editFilmsOnEvent,
   deleteEvent,
   createEventWithoutFilm,
+  getCameras,
+  createCamera,
+  updateCamera,
+  deleteCamera,
+  editEventCameras,
 } from "@/api/film-collection";
 import FilmCollectionTable from "./FilmEntryTable.vue";
 import CreateFilmDialog from "./CreateFilmDialog.vue";
@@ -21,6 +26,9 @@ import EditFilmDialog from "./EditFilmDialog.vue";
 import EventLogTable from "./EventLogTable.vue";
 import EditEventDialog from "./EditEventDialog.vue";
 import UniqueFilmsTable from "./UniqueFilmsTable.vue";
+import CameraTable from "./CameraTable.vue";
+import CreateCameraDialog from "./CreateCameraDialog.vue";
+import EditCameraDialog from "./EditCameraDialog.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
 const filmEvents = ref<FilmEvent[]>([]);
@@ -30,13 +38,18 @@ const editDialogVisible = ref(false);
 const copyDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
 const createEventDialogVisible = ref(false);
+const createCameraDialog = ref(false);
+const editCameraDialog = ref(false);
 
 const editingFilm = ref<FilmEntry | null>(null);
 const copyingFilm = ref<FilmEntry | null>(null);
 const filmToDelete = ref<FilmEntry | null>(null);
 const eventToDelete = ref<{ eventId: number; film_ids: number[] } | null>(null);
+const editingCamera = ref<Camera | null>(null);
 
 const currentTab = ref(0);
+
+const cameras = ref<Camera[]>([]);
 
 const uniqueNames = computed(() => {
   const nameFrequency = filmCollections.value.reduce(
@@ -91,8 +104,23 @@ const uniqueLocations = computed(() =>
     .sort(),
 );
 
+const uniqueCameraBrands = computed(() =>
+  Array.from(new Set(cameras.value.map((c) => c.brand)))
+);
+
 onMounted(async () => {
+  await Promise.all([
+    loadFilms(),
+    loadEvents(),
+    loadCameras(),
+  ]);
+});
+
+const loadFilms = async () => {
   filmCollections.value = await getFilmCollections();
+};
+
+const loadEvents = async () => {
   filmEvents.value = await getEvents();
 
   // Populate eventsByFilm from filmEvents
@@ -112,7 +140,15 @@ onMounted(async () => {
     },
     {} as Record<number, Event[]>,
   );
-});
+};
+
+const loadCameras = async () => {
+  try {
+    cameras.value = await getCameras();
+  } catch (error) {
+    console.error("Error loading cameras:", error);
+  }
+};
 
 const createNewFilm = async (newFilm: FilmEntry) => {
   const data = await createFilmCollection(newFilm);
@@ -262,6 +298,7 @@ const handleCreateAndAddEventToFilm = async (
     ...newEvent,
     date: new Date(newEvent.date),
     film_ids: [filmId],
+    camera_ids: [],
   });
 };
 
@@ -287,6 +324,7 @@ const handleUpdateEvent = async (eventId: number, event: Omit<Event, "id">) => {
     filmEvents.value[index] = {
       ...updatedEvent,
       film_ids: filmEvents.value[index].film_ids,
+      camera_ids: filmEvents.value[index].camera_ids,
     };
   }
 };
@@ -325,6 +363,7 @@ const handleEditFilmsOnEvent = async (eventId: number, filmIds: number[]) => {
 const handleCreateEvent = async (
   event: Omit<Event, "id">,
   filmIds: number[],
+  cameraIds: number[],
 ) => {
   let newEvent: Event;
 
@@ -348,6 +387,7 @@ const handleCreateEvent = async (
     ...newEvent,
     date: new Date(newEvent.date),
     film_ids: filmIds,
+    camera_ids: cameraIds,
   });
 
   // Update eventsByFilm for each selected film
@@ -398,7 +438,91 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
     ...newEvent,
     date: new Date(newEvent.date),
     film_ids: [filmId],
+    camera_ids: [],
   });
+};
+
+const handleCopyEvent = async (event: Omit<Event, "id">, filmIds: number[], cameraIds: number[]) => {
+  if (filmIds.length === 0) return;
+  const newEvent = await createFilmEvent(filmIds[0], event);
+
+  // Create additional associations if more films are selected
+  for (let i = 1; i < filmIds.length; i++) {
+    await addExistingEventToFilm(filmIds[i], newEvent.id);
+  }
+
+  // Update filmEvents
+  filmEvents.value.push({
+    ...newEvent,
+    date: new Date(newEvent.date),
+    film_ids: filmIds,
+    camera_ids: cameraIds,
+  });
+
+  // Update eventsByFilm for each selected film
+  filmIds.forEach((filmId) => {
+    if (!eventsByFilm.value[filmId]) eventsByFilm.value[filmId] = [];
+    eventsByFilm.value[filmId].push({
+      id: newEvent.id,
+      date: new Date(newEvent.date),
+      event_type: newEvent.event_type,
+      location: newEvent.location,
+      notes: newEvent.notes,
+    });
+  });
+};
+const handleUpdateEventCameras = async (eventId: number, cameraIds: number[]) => {
+  await editEventCameras(eventId, cameraIds);
+  const index = filmEvents.value.findIndex((e) => e.id === eventId);
+  if (index !== -1) {
+    filmEvents.value[index].camera_ids = cameraIds;
+  }
+};
+
+const handleCreateCamera = async (camera: Camera) => {
+  try {
+    const newCamera = await createCamera(camera);
+    cameras.value.push(newCamera);
+    createCameraDialog.value = false;
+  } catch (error) {
+    console.error("Error creating camera:", error);
+  }
+};
+
+const handleUpdateCamera = async (camera: Camera) => {
+  try {
+    const updatedCamera = await updateCamera(camera.id, camera);
+    const index = cameras.value.findIndex((c) => c.id === camera.id);
+    if (index !== -1) {
+      cameras.value[index] = updatedCamera;
+    }
+    editCameraDialog.value = false;
+    editingCamera.value = null;
+  } catch (error) {
+    console.error("Error updating camera:", error);
+  }
+};
+
+const handleDeleteCamera = async (camera: Camera) => {
+  if (!confirm(`Are you sure you want to delete ${camera.brand} ${camera.model}?`)) {
+    return;
+  }
+
+  try {
+    await deleteCamera(camera.id);
+    cameras.value = cameras.value.filter((c) => c.id !== camera.id);
+  } catch (error) {
+    console.error("Error deleting camera:", error);
+  }
+};
+
+const editCamera = (camera: Camera) => {
+  editingCamera.value = camera;
+  editCameraDialog.value = true;
+};
+
+const confirmDeleteCamera = (camera: Camera) => {
+  handleDeleteCamera(camera);
 };
 </script>
 
@@ -411,11 +535,15 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
       <v-btn color="primary" @click="createEventDialogVisible = true">
         New Event
       </v-btn>
+      <v-btn color="primary" @click="createCameraDialog = true">
+        Add Camera
+      </v-btn>
     </div>
 
     <v-tabs v-model="currentTab">
       <v-tab value="0">Film Entries</v-tab>
       <v-tab value="1">Event Log</v-tab>
+      <v-tab value="3">Cameras</v-tab>
       <v-tab value="2">Unique Films</v-tab>
     </v-tabs>
 
@@ -442,15 +570,21 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
           :films="filmCollections"
           :uniqueEvents="uniqueEvents"
           :uniqueLocations="uniqueLocations"
+          :cameras="cameras"
           @update-event="handleUpdateEvent"
           @edit-films-on-event="handleEditFilmsOnEvent"
           @remove-event="handleRemoveEvent"
           @add-event="handleAddEvent"
+          @update-event-cameras="handleUpdateEventCameras"
         />
       </v-window-item>
 
       <v-window-item value="2">
         <UniqueFilmsTable :films="filmCollections" />
+      </v-window-item>
+
+      <v-window-item value="3">
+        <CameraTable :cameras="cameras" @edit="editCamera" @delete="confirmDeleteCamera" />
       </v-window-item>
     </v-window>
 
@@ -487,7 +621,9 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
       :unique-events="uniqueEvents"
       :unique-locations="uniqueLocations"
       :films="filmCollections"
+      :cameras="cameras"
       :associated-film-ids="[]"
+      :associated-camera-ids="[]"
       @save="handleCreateEvent"
     />
 
@@ -511,5 +647,18 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <CreateCameraDialog
+      v-model="createCameraDialog"
+      :unique-brands="uniqueCameraBrands"
+      @create="handleCreateCamera"
+    />
+
+    <EditCameraDialog
+      v-model="editCameraDialog"
+      :camera="editingCamera"
+      :unique-brands="uniqueCameraBrands"
+      @save="handleUpdateCamera"
+    />
   </v-container>
 </template>

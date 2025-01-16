@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Event, FilmEntry, FilmEvent } from "@/types/film-collection";
+import { Event, FilmEntry, FilmEvent, Camera } from "@/types/film-collection";
 import VueMarkdown from "vue-markdown-render";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
 import { formatDate } from "@/utils";
@@ -11,6 +11,7 @@ const props = defineProps<{
   uniqueEvents: string[];
   uniqueLocations: string[];
   films: FilmEntry[];
+  cameras: Camera[];
 }>();
 
 const emit = defineEmits<{
@@ -19,22 +20,24 @@ const emit = defineEmits<{
   (e: "updateEvent", eventId: number, event: Omit<Event, "id">): void;
   (e: "removeEvent", eventId: number): void;
   (e: "editFilmsOnEvent", eventId: number, filmIds: number[]): void;
-  (e: "addEvent", filmId: number, event: Omit<Event, "id">): void;
+  (e: "updateEventCameras", eventId: number, cameraIds: number[]): void;
 }>();
 
 const eventHeaders = [
   { title: "", key: "actions", sortable: false },
-  { title: "Date", key: "date", sortable: true, width: "20%" },
-  { title: "Event Type", key: "event_type", sortable: true, width: "20%" },
-  { title: "Location", key: "location", sortable: true, width: "20%" },
+  { title: "Date", key: "date", sortable: true },
+  { title: "Event Type", key: "event_type", sortable: true },
+  { title: "Location", key: "location", sortable: true },
+  { title: "Associated Films", key: "films", sortable: false },
+  { title: "Associated Cameras", key: "cameras", sortable: false },
   { title: "Notes", key: "notes", sortable: false, width: "35%" },
-  { title: "Associated Films", key: "films", sortable: false, width: "25%" },
 ];
 
 // Edit dialog state
 const editDialog = ref(false);
 const editingEvent = ref<Event | null>(null);
 const editingEventFilmIds = ref<number[]>([]);
+const editingEventCameraIds = ref<number[]>([]);
 
 const sortedEvents = computed(() =>
   [...(props.events || [])].sort((a, b) => {
@@ -49,9 +52,16 @@ const getAssociatedFilms = (eventId: number) => {
   return props.films.filter((film) => event.film_ids.includes(film.id));
 };
 
+const getAssociatedCameras = (eventId: number) => {
+  const event = props.events?.find((e) => e.id === eventId);
+  if (!event?.camera_ids) return [];
+  return props.cameras.filter((camera) => event.camera_ids.includes(camera.id));
+};
+
 const openEditDialog = (event: FilmEvent) => {
   editingEvent.value = event;
   editingEventFilmIds.value = event.film_ids;
+  editingEventCameraIds.value = event.camera_ids;
   editDialog.value = true;
 };
 
@@ -74,32 +84,45 @@ const handleDelete = () => {
 const copyDialog = ref(false);
 const copyingEvent = ref<Event | null>(null);
 const copyingEventFilmIds = ref<number[]>([]);
+const copyingEventCameraIds = ref<number[]>([]);
 
 const openCopyDialog = (event: FilmEvent) => {
   copyingEvent.value = {
     ...event,
     date: new Date(),
   };
-  copyingEventFilmIds.value = event.film_ids;
+  copyingEventFilmIds.value = event.film_ids || [];
+  copyingEventCameraIds.value = event.camera_ids || [];
   copyDialog.value = true;
 };
 
-const handleCopy = (newEvent: Omit<Event, "id">, filmIds: number[]) => {
+const handleCopy = (
+  newEvent: Omit<Event, "id">,
+  filmIds: number[],
+  cameraIds: number[],
+) => {
   emit("addEvent", filmIds[0], newEvent);
   copyDialog.value = false;
   copyingEvent.value = null;
   copyingEventFilmIds.value = [];
+  copyingEventCameraIds.value = [];
 };
 
-const handleEditSave = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
+const handleEditSave = (
+  updatedEvent: Omit<Event, "id">,
+  filmIds: number[],
+  cameraIds: number[],
+) => {
   if (!editingEvent.value) return;
 
   emit("updateEvent", editingEvent.value.id, updatedEvent);
   emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
+  emit("updateEventCameras", editingEvent.value.id, cameraIds);
 
   editDialog.value = false;
   editingEvent.value = null;
   editingEventFilmIds.value = [];
+  editingEventCameraIds.value = [];
 };
 </script>
 
@@ -136,6 +159,20 @@ const handleEditSave = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
           :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
         >
           {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
+        </v-chip>
+      </div>
+    </template>
+
+    <template v-slot:item.cameras="{ item }">
+      <div class="d-flex flex-wrap gap-1 my-2">
+        <v-chip
+          v-for="camera in getAssociatedCameras(item.id)"
+          :key="camera.id"
+          class="ma-1"
+          size="small"
+          :color="getBrandColor(camera.brand) || 'grey'"
+        >
+          {{ camera.brand }} {{ camera.model }}
         </v-chip>
       </div>
     </template>
@@ -178,6 +215,8 @@ const handleEditSave = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
     :unique-locations="uniqueLocations"
     :films="films"
     :associated-film-ids="editingEventFilmIds"
+    :cameras="cameras"
+    :associated-camera-ids="editingEventCameraIds"
     @save="handleEditSave"
   />
 
@@ -188,6 +227,8 @@ const handleEditSave = (updatedEvent: Omit<Event, "id">, filmIds: number[]) => {
     :unique-locations="uniqueLocations"
     :films="films"
     :associated-film-ids="copyingEventFilmIds"
+    :cameras="cameras"
+    :associated-camera-ids="copyingEventCameraIds"
     @save="handleCopy"
   />
 

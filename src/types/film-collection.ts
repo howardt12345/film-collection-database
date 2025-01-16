@@ -22,6 +22,7 @@ export interface Event {
 
 export interface FilmEvent extends Event {
   film_ids: number[];
+  camera_ids?: number[];
 }
 
 export interface FilmEntry {
@@ -46,3 +47,15 @@ export interface FilmEntry {
     event_type: string;
   };
 };
+
+export interface Camera {
+  id: number;
+  brand: string;
+  model: string;
+  serial_number?: string;
+  date_acquired?: Date;
+  date_sold?: Date;
+  lens?: string;
+  film_format?: FilmFormat;
+  notes?: string;
+}

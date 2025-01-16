@@ -1,4 +1,4 @@
-import { FilmEntry, Event, FilmEvent } from "@/types/film-collection";
+import { FilmEntry, Event, FilmEvent, Camera } from "@/types/film-collection";
 import { supabase } from "./supabase";
 
 type DateToString<T> = {
@@ -129,20 +129,31 @@ export const getEvents = async (): Promise<FilmEvent[]> => {
   if (eventsError) throw eventsError;
 
   // Then get all film-event associations
-  const { data: associations, error: associationsError } = await supabase
+  const { data: filmAssociations, error: filmAssociationsError } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
     .select("*");
 
-  if (associationsError) throw associationsError;
+  if (filmAssociationsError) throw filmAssociationsError;
+
+  // Then get all event-camera associations
+  const { data: cameraAssociations, error: cameraAssociationsError } = await supabase
+    .schema("film_collection")
+    .from("film_event_camera")
+    .select("*");
+
+  if (cameraAssociationsError) throw cameraAssociationsError;
 
   // Map the associations to the events
   return events.map((event) => ({
     ...event,
     date: new Date(event.date),
-    film_ids: associations
+    film_ids: filmAssociations
       .filter((assoc) => assoc.event_id === event.id)
       .map((assoc) => assoc.film_entry_id),
+    camera_ids: cameraAssociations
+      .filter((assoc) => assoc.event_id === event.id)
+      .map((assoc) => assoc.camera_id),
   }));
 };
 
@@ -373,4 +384,127 @@ export const createEventWithoutFilm = async (
 
   if (error) throw error;
   return data;
+};
+
+export const getCameras = async (): Promise<Camera[]> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("camera")
+    .select("*")
+    .order("date_acquired", { ascending: false });
+
+  if (error) throw error;
+
+  return data.map(camera => ({
+    ...camera,
+    date_acquired: new Date(camera.date_acquired),
+    date_sold: camera.date_sold ? new Date(camera.date_sold) : undefined,
+  }));
+};
+
+export const createCamera = async (camera: Omit<Camera, "id">): Promise<Camera> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("camera")
+    .insert([camera])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    ...data,
+    date_acquired: new Date(data.date_acquired),
+    date_sold: data.date_sold ? new Date(data.date_sold) : undefined,
+  };
+};
+
+export const updateCamera = async (id: number, camera: Partial<Camera>): Promise<Camera> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("camera")
+    .update(camera)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    ...data,
+    date_acquired: new Date(data.date_acquired),
+    date_sold: data.date_sold ? new Date(data.date_sold) : undefined,
+  };
+};
+
+export const deleteCamera = async (id: number): Promise<void> => {
+  const { error } = await supabase
+    .schema("film_collection")
+    .from("camera")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+};
+
+export const addCameraToEvent = async (eventId: number, cameraId: number): Promise<void> => {
+  const { error } = await supabase
+    .schema("film_collection")
+    .from("film_event_camera")
+    .insert([{ event_id: eventId, camera_id: cameraId }]);
+
+  if (error) throw error;
+};
+
+export const removeCameraFromEvent = async (eventId: number, cameraId: number): Promise<void> => {
+  const { error } = await supabase
+    .schema("film_collection")
+    .from("film_event_camera")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("camera_id", cameraId);
+
+  if (error) throw error;
+};
+
+export const editEventCameras = async (eventId: number, cameraIds: number[]): Promise<void> => {
+  // First get current associations
+  const { data: currentAssociations, error: fetchError } = await supabase
+    .schema("film_collection")
+    .from("film_event_camera")
+    .select("camera_id")
+    .eq("event_id", eventId);
+
+  if (fetchError) throw fetchError;
+
+  const currentCameraIds = currentAssociations.map((a) => a.camera_id);
+
+  // Remove cameras that are no longer associated
+  const camerasToRemove = currentCameraIds.filter((id) => !cameraIds.includes(id));
+  if (camerasToRemove.length > 0) {
+    const { error: removeError } = await supabase
+      .schema("film_collection")
+      .from("film_event_camera")
+      .delete()
+      .eq("event_id", eventId)
+      .in("camera_id", camerasToRemove);
+
+    if (removeError) throw removeError;
+  }
+
+  // Add new camera associations
+  const camerasToAdd = cameraIds.filter((id) => !currentCameraIds.includes(id));
+  if (camerasToAdd.length > 0) {
+    const { error: addError } = await supabase
+      .schema("film_collection")
+      .from("film_event_camera")
+      .insert(
+        camerasToAdd.map((cameraId) => ({
+          camera_id: cameraId,
+          event_id: eventId,
+        })),
+      );
+
+    if (addError) throw addError;
+  }
 };

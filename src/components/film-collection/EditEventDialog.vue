@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Event, FilmEntry } from "@/types/film-collection";
+import { Event, FilmEntry, Camera } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
 
@@ -11,11 +11,13 @@ const props = defineProps<{
   uniqueLocations: string[];
   films: FilmEntry[];
   associatedFilmIds: number[];
+  cameras: Camera[];
+  associatedCameraIds: number[];
 }>();
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
-  (e: "save", event: Omit<Event, "id">, filmIds: number[]): void;
+  (e: "save", event: Omit<Event, "id">, filmIds: number[], cameraIds: number[]): void;
 }>();
 
 const editingEvent = ref<Omit<Event, "id">>({
@@ -26,6 +28,7 @@ const editingEvent = ref<Omit<Event, "id">>({
 });
 
 const selectedFilmIds = ref<number[]>([]);
+const selectedCameraIds = ref<number[]>([]);
 
 watch(
   () => props.event,
@@ -38,6 +41,7 @@ watch(
         notes: newEvent.notes || "",
       };
       selectedFilmIds.value = [...props.associatedFilmIds];
+      selectedCameraIds.value = [...props.associatedCameraIds];
     }
   },
   { immediate: true },
@@ -47,7 +51,7 @@ const saveEvent = () => {
   emit("save", {
     ...editingEvent.value,
     date: new Date(editingEvent.value.date),
-  }, selectedFilmIds.value);
+  }, selectedFilmIds.value, selectedCameraIds.value);
   emit("update:modelValue", false);
 };
 </script>
@@ -143,13 +147,24 @@ const saveEvent = () => {
               </template>
             </v-select>
           </v-col>
+          <v-col cols="12">
+            <v-select
+              v-model="selectedCameraIds"
+              :items="cameras"
+              item-value="id"
+              label="Associated Cameras"
+              :item-title="(camera) => `${camera.brand} ${camera.model}`"
+              multiple
+              chips
+              closable-chips
+              density="comfortable"
+            />
+          </v-col>
         </v-row>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" @click="emit('update:modelValue', false)"
-          >Cancel</v-btn
-        >
+        <v-btn color="secondary" @click="emit('update:modelValue', false)">Cancel</v-btn>
         <v-btn
           color="primary"
           @click="saveEvent"

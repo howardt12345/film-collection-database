@@ -1,13 +1,42 @@
 export const getBrandColor = (brand: string) => {
   const brandColors: { [key: string]: string } = {
-    Kodak: "yellow darken-2",
+    // Film Manufacturers
+    Kodak: "yellow darken-4",
     Fuji: "green darken-2",
     Cinestill: "red darken-2",
     Konica: "blue darken-2",
     Ilford: "grey darken-3",
-    Lomo: "purple darken-2",
-    Harman: "orange darken-2",
+    Lomo: "purple accent-2",
+    Harman: "grey darken-4",
     Popho: "pink lighten-2",
+    Foma: "blue-grey darken-2",
+    Rollei: "black",
+    Adox: "grey darken-2",
+    AgfaPhoto: "orange darken-3",
+    Shanghai: "deep-orange darken-2",
+    Kentmere: "brown darken-2",
+
+    // Camera Manufacturers
+    Canon: "red darken-4",
+    Nikon: "deep-orange darken-3",
+    Sony: "indigo darken-2",
+    Hasselblad: "grey darken-4",
+    PhaseOne: "blue-grey darken-4",
+    Panasonic: "cyan darken-2",
+    Leica: "black",
+    Olympus: "blue darken-3",
+    Pentax: "deep-purple darken-3",
+    Sigma: "grey darken-2",
+    Ricoh: "orange darken-3",
+
+    // Additional Legacy Brands
+    Minolta: "red darken-3",
+    Mamiya: "blue-grey darken-3",
+    Bronica: "brown darken-3",
+    Yashica: "teal darken-2",
+    Contax: "amber darken-3",
+    Voigtlander: "grey darken-3",
+    Zeiss: "blue darken-4",
   };
 
   const lowercaseBrand = brand.toLowerCase();
@@ -52,6 +81,7 @@ export const getFilmNameColor = (name: string) => {
     Delta: "grey darken-2",
     "Double-X": "blue-grey darken-1",
     Fomapan: "grey lighten-1",
+    Luminar: "teal darken-4",
   };
 
   const lowercaseName = name.toLowerCase();

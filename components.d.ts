@@ -9,7 +9,11 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddEventToFilmDialog: typeof import('./src/components/film-collection/AddEventToFilmDialog.vue')['default']
     Auth: typeof import('./src/components/Auth.vue')['default']
+    CameraForm: typeof import('./src/components/film-collection/CameraForm.vue')['default']
+    CameraTable: typeof import('./src/components/film-collection/CameraTable.vue')['default']
+    CreateCameraDialog: typeof import('./src/components/film-collection/CreateCameraDialog.vue')['default']
     CreateFilmDialog: typeof import('./src/components/film-collection/CreateFilmDialog.vue')['default']
+    EditCameraDialog: typeof import('./src/components/film-collection/EditCameraDialog.vue')['default']
     EditEventDialog: typeof import('./src/components/film-collection/EditEventDialog.vue')['default']
     EditFilmDialog: typeof import('./src/components/film-collection/EditFilmDialog.vue')['default']
     EventLogTable: typeof import('./src/components/film-collection/EventLogTable.vue')['default']
