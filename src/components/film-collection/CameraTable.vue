@@ -13,6 +13,7 @@ const emit = defineEmits<{
 }>();
 
 const headers = [
+  { title: "", key: "actions", sortable: false },
   { title: "Brand", key: "brand", sortable: true },
   { title: "Model", key: "model", sortable: true },
   { title: "Serial Number", key: "serial_number", sortable: true },
@@ -20,7 +21,6 @@ const headers = [
   { title: "Date Sold", key: "date_sold", sortable: true },
   { title: "Lens", key: "lens", sortable: true },
   { title: "Film Format", key: "film_format", sortable: true },
-  { title: "Actions", key: "actions", sortable: false },
 ];
 
 const sortedCameras = computed(() =>
@@ -48,19 +48,27 @@ const sortedCameras = computed(() =>
     </template>
 
     <template v-slot:item.actions="{ item }">
-      <v-btn
-        icon="mdi-pencil"
-        size="small"
-        color="primary"
-        class="mr-2"
-        @click="emit('edit', item)"
-      />
-      <v-btn
-        icon="mdi-delete"
-        size="small"
-        color="error"
-        @click="emit('delete', item)"
-      />
+      <v-menu>
+        <template v-slot:activator="{ props }">
+          <v-btn icon v-bind="props" size="small" elevation="0">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item @click="emit('edit', item)">
+            <v-list-item-title>
+              <v-icon>mdi-pencil</v-icon>
+              <span class="ml-2">Edit</span>
+            </v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="emit('delete', item)">
+            <v-list-item-title>
+              <v-icon>mdi-delete</v-icon>
+              <span class="ml-2">Delete</span>
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
     </template>
   </v-data-table>
 </template>
