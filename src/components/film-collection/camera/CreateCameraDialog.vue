@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { Camera, FilmFormat } from "@/types/film-collection";
-import CameraForm from "../../forms/CameraForm.vue";
+import CameraForm from "./CameraForm.vue";
 
 const props = defineProps<{
   modelValue: boolean;

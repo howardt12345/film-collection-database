@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { FilmEntry, FilmType, FilmFormat } from "@/types/film-collection";
-import FilmForm from "../../forms/FilmForm.vueorm.vue";
+import FilmForm from "./FilmForm.vue";
 
 defineProps<{
   modelValue: boolean;

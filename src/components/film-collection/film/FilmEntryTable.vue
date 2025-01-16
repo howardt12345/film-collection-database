@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import EventLogTable from "./FilmEventLogTable.vue";
+import FilmEventLogTable from "./FilmEventLogTable.vue";
 import { Event, FilmEntry } from "@/types/film-collection";
 import { formatDate } from "@/utils";
 import VueMarkdown from "vue-markdown-render";
@@ -335,7 +335,7 @@ const allEvents = computed(() =>
                       Add Event
                     </v-btn>
                   </div>
-                  <EventLogTable
+                  <FilmEventLogTable
                     :events="eventsByFilm[item.id] || []"
                     @remove-event="
                       (eventId) => emit('removeEventFromFilm', item.id, eventId)

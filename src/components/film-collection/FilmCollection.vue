@@ -26,9 +26,9 @@ import EditFilmDialog from "./film/EditFilmDialog.vue";
 import EventLogTable from "./event/EventLogTable.vue";
 import EditEventDialog from "./event/EditEventDialog.vue";
 import UniqueFilmsTable from "./UniqueFilmsTable.vue";
-import CameraTable from "./CameraTable.vue";
-import CreateCameraDialog from "./CreateCameraDialog.vue";
-import EditCameraDialog from "./EditCameraDialog.vue";
+import CameraTable from "./camera/CameraTable.vue";
+import CreateCameraDialog from "./camera/CreateCameraDialog.vue";
+import EditCameraDialog from "./camera/EditCameraDialog.vue";
 
 const filmCollections = ref<FilmEntry[]>([]);
 const filmEvents = ref<FilmEvent[]>([]);
@@ -438,39 +438,6 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
   });
 };
 
-const handleCopyEvent = async (
-  event: Omit<Event, "id">,
-  filmIds: number[],
-  cameraIds: number[],
-) => {
-  if (filmIds.length === 0) return;
-  const newEvent = await createFilmEvent(filmIds[0], event);
-
-  // Create additional associations if more films are selected
-  for (let i = 1; i < filmIds.length; i++) {
-    await addExistingEventToFilm(filmIds[i], newEvent.id);
-  }
-
-  // Update filmEvents
-  filmEvents.value.push({
-    ...newEvent,
-    date: new Date(newEvent.date),
-    film_ids: filmIds,
-    camera_ids: cameraIds,
-  });
-
-  // Update eventsByFilm for each selected film
-  filmIds.forEach((filmId) => {
-    if (!eventsByFilm.value[filmId]) eventsByFilm.value[filmId] = [];
-    eventsByFilm.value[filmId].push({
-      id: newEvent.id,
-      date: new Date(newEvent.date),
-      event_type: newEvent.event_type,
-      location: newEvent.location,
-      notes: newEvent.notes,
-    });
-  });
-};
 const handleUpdateEventCameras = async (
   eventId: number,
   cameraIds: number[],
