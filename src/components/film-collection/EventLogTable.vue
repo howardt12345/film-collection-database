@@ -88,8 +88,7 @@ const copyingEventCameraIds = ref<number[]>([]);
 
 const openCopyDialog = (event: FilmEvent) => {
   copyingEvent.value = {
-    ...event,
-    date: new Date(),
+    ...event
   };
   copyingEventFilmIds.value = event.film_ids || [];
   copyingEventCameraIds.value = event.camera_ids || [];

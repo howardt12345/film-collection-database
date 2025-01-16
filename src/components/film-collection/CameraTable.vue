@@ -5,6 +5,7 @@ import { formatDate } from "@/utils";
 
 const props = defineProps<{
   cameras: Camera[];
+  // filmEvents: FilmEvent[];
 }>();
 
 const emit = defineEmits<{

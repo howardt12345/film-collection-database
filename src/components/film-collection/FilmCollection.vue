@@ -105,15 +105,11 @@ const uniqueLocations = computed(() =>
 );
 
 const uniqueCameraBrands = computed(() =>
-  Array.from(new Set(cameras.value.map((c) => c.brand)))
+  Array.from(new Set(cameras.value.map((c) => c.brand))),
 );
 
 onMounted(async () => {
-  await Promise.all([
-    loadFilms(),
-    loadEvents(),
-    loadCameras(),
-  ]);
+  await Promise.all([loadFilms(), loadEvents(), loadCameras()]);
 });
 
 const loadFilms = async () => {
@@ -442,7 +438,11 @@ const handleAddEvent = async (filmId: number, event: Omit<Event, "id">) => {
   });
 };
 
-const handleCopyEvent = async (event: Omit<Event, "id">, filmIds: number[], cameraIds: number[]) => {
+const handleCopyEvent = async (
+  event: Omit<Event, "id">,
+  filmIds: number[],
+  cameraIds: number[],
+) => {
   if (filmIds.length === 0) return;
   const newEvent = await createFilmEvent(filmIds[0], event);
 
@@ -471,7 +471,10 @@ const handleCopyEvent = async (event: Omit<Event, "id">, filmIds: number[], came
     });
   });
 };
-const handleUpdateEventCameras = async (eventId: number, cameraIds: number[]) => {
+const handleUpdateEventCameras = async (
+  eventId: number,
+  cameraIds: number[],
+) => {
   await editEventCameras(eventId, cameraIds);
   const index = filmEvents.value.findIndex((e) => e.id === eventId);
   if (index !== -1) {
@@ -504,7 +507,9 @@ const handleUpdateCamera = async (camera: Camera) => {
 };
 
 const handleDeleteCamera = async (camera: Camera) => {
-  if (!confirm(`Are you sure you want to delete ${camera.brand} ${camera.model}?`)) {
+  if (
+    !confirm(`Are you sure you want to delete ${camera.brand} ${camera.model}?`)
+  ) {
     return;
   }
 
@@ -584,7 +589,12 @@ const confirmDeleteCamera = (camera: Camera) => {
       </v-window-item>
 
       <v-window-item value="3">
-        <CameraTable :cameras="cameras" @edit="editCamera" @delete="confirmDeleteCamera" />
+        <CameraTable
+          :cameras="cameras"
+          :filmEvents="filmEvents"
+          @edit="editCamera"
+          @delete="confirmDeleteCamera"
+        />
       </v-window-item>
     </v-window>
 
