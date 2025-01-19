@@ -159,6 +159,29 @@ watch(search, (newValue) => {
 watch(() => props.search, (newValue) => {
   search.value = newValue || "";
 });
+
+const filteredFilms = computed(() => {
+  const searchTerms = search.value.trim().toLowerCase().split(' ');
+
+  return props.films.filter(film => {
+    const attributes = [
+      film.name.toLowerCase(),
+      film.brand.toLowerCase(),
+      `${film.brand} ${film.name}`.toLowerCase(),
+      formatDate(film.date_acquired).toLowerCase(),
+      film.film_format.toLowerCase(),
+      film.film_type.toLowerCase(),
+      `ISO ${film.iso}`.toLowerCase(),
+    ];
+
+    return searchTerms.every(term =>
+      attributes.some(attribute => attribute.includes(term))
+    );
+  });
+});
+
+
+
 </script>
 
 <template>
@@ -175,12 +198,11 @@ watch(() => props.search, (newValue) => {
     </template>
     <v-data-table
       :headers="filmHeaders"
-      :items="films"
+      :items="filteredFilms"
       :sort-by="[{ key: 'date_acquired', order: 'desc' }]"
       class="elevation-1"
       show-expand
       v-model:expanded="expandedItem"
-      :search="search"
       :items-per-page="-1"
     >
       <template #item.actions="{ item }">
