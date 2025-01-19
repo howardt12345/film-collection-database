@@ -55,13 +55,13 @@ const getAssociatedFilms = (eventId: number) => {
 const getAssociatedCameras = (eventId: number) => {
   const event = props.events?.find((e) => e.id === eventId);
   if (!event?.camera_ids) return [];
-  return props.cameras.filter((camera) => event.camera_ids.includes(camera.id));
+  return props.cameras.filter((camera) => (event.camera_ids ?? []).includes(camera.id));
 };
 
 const openEditDialog = (event: FilmEvent) => {
   editingEvent.value = event;
   editingEventFilmIds.value = event.film_ids;
-  editingEventCameraIds.value = event.camera_ids;
+  editingEventCameraIds.value = event.camera_ids || [];
   editDialog.value = true;
 };
 
@@ -130,7 +130,7 @@ const handleEditSave = (
     :headers="eventHeaders"
     :items="sortedEvents"
     class="elevation-1"
-    :items-per-page="25"
+    :items-per-page="-1"
   >
     <template v-slot:item.date="{ item }">
       {{ formatDate(item.date) }}

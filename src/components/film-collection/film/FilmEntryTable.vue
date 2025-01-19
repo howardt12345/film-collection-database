@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import FilmEventLogTable from "./FilmEventLogTable.vue";
 import { Event, FilmEntry } from "@/types/film-collection";
 import { formatDate } from "@/utils";
@@ -19,6 +19,7 @@ const props = defineProps<{
   films: FilmEntry[];
   uniqueEvents: string[];
   eventsByFilm: Record<number, Event[]>;
+  initialSearch?: string;
 }>();
 
 const emit = defineEmits<{
@@ -33,6 +34,7 @@ const emit = defineEmits<{
     event: Omit<Event, "id">,
   ): void;
   (e: "updateUsed", filmId: number, used: number): void;
+  (e: "searchChange", value: string): void;
 }>();
 
 const filmHeaders = [
@@ -48,7 +50,7 @@ const filmHeaders = [
   { title: "Latest Event Date", key: "latest_event.date", sortable: true },
 ];
 
-const search = ref("");
+const search = ref(props.initialSearch || "");
 
 const expandedItem = ref<string[]>([]);
 
@@ -147,6 +149,11 @@ const allEvents = computed(() =>
       film_ids: [], // Add film_ids property
     })),
 );
+
+// Watch for search changes and emit them
+watch(search, (newValue) => {
+  emit("searchChange", newValue);
+});
 </script>
 
 <template>
@@ -169,7 +176,7 @@ const allEvents = computed(() =>
       show-expand
       v-model:expanded="expandedItem"
       :search="search"
-      :items-per-page="25"
+      :items-per-page="-1"
     >
       <template #item.actions="{ item }">
         <v-menu>

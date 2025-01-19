@@ -2,8 +2,10 @@
 import { ref, onMounted } from "vue";
 import { supabase } from "@/api/supabase";
 import { Session } from "@supabase/supabase-js";
+import { useRouter } from "vue-router";
 
 const session = ref<Session | null>();
+const router = useRouter();
 
 onMounted(() => {
   supabase.auth.getSession().then(({ data }) => {
@@ -29,7 +31,7 @@ onMounted(() => {
             @click="supabase.auth.signOut()"
           />
         </div>
-        <FilmCollection :session="session" />
+        <router-view :session="session" />
       </v-container>
       <Auth v-else />
     </v-main>

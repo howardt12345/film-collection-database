@@ -17,6 +17,7 @@
     "uuid": "^10.0.0",
     "vue": "^3.4.31",
     "vue-markdown-render": "^2.2.1",
+    "vue-router": "^4.5.0",
     "vuetify": "^3.6.11"
   },
   "devDependencies": {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { FilmEntry, FilmEvent, Event, Camera } from "@/types/film-collection";
 import {
   getFilmCollections,
@@ -25,7 +26,7 @@ import CreateFilmDialog from "./film/CreateFilmDialog.vue";
 import EditFilmDialog from "./film/EditFilmDialog.vue";
 import EventLogTable from "./event/EventLogTable.vue";
 import EditEventDialog from "./event/EditEventDialog.vue";
-import UniqueFilmsTable from "./UniqueFilmsTable.vue";
+import UniqueFilms from "./UniqueFilms.vue";
 import CameraTable from "./camera/CameraTable.vue";
 import CreateCameraDialog from "./camera/CreateCameraDialog.vue";
 import EditCameraDialog from "./camera/EditCameraDialog.vue";
@@ -50,6 +51,24 @@ const editingCamera = ref<Camera | null>(null);
 const currentTab = ref(0);
 
 const cameras = ref<Camera[]>([]);
+
+const route = useRoute();
+const router = useRouter();
+
+// Add search state
+const currentSearch = ref(route.query.search?.toString() || "");
+
+// Handle search changes
+const handleSearchChange = (value: string) => {
+  currentSearch.value = value;
+  // Update URL without triggering navigation
+  router.replace({
+    query: {
+      ...route.query,
+      search: value || undefined, // Remove search param if empty
+    },
+  });
+};
 
 const uniqueNames = computed(() => {
   const nameFrequency = filmCollections.value.reduce(
@@ -526,6 +545,7 @@ const confirmDeleteCamera = (camera: Camera) => {
           :events="filmEvents"
           :events-by-film="eventsByFilm"
           :unique-events="uniqueEvents"
+          :initial-search="currentSearch"
           @edit="editFilm"
           @copy="copyFilm"
           @delete="confirmDeleteFilm"
@@ -533,6 +553,7 @@ const confirmDeleteCamera = (camera: Camera) => {
           @add-existing-event-to-film="handleAddExistingEventToFilm"
           @create-and-add-event-to-film="handleCreateAndAddEventToFilm"
           @update-used="updateUsed"
+          @search-change="handleSearchChange"
         />
       </v-window-item>
 
@@ -552,7 +573,7 @@ const confirmDeleteCamera = (camera: Camera) => {
       </v-window-item>
 
       <v-window-item value="2">
-        <UniqueFilmsTable :films="filmCollections" />
+        <UniqueFilms :films="filmCollections" />
       </v-window-item>
 
       <v-window-item value="3">

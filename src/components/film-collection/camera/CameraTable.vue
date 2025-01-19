@@ -38,7 +38,7 @@ const sortedCameras = computed(() =>
     :headers="headers"
     :items="sortedCameras"
     class="elevation-1"
-    :items-per-page="25"
+    :items-per-page="-1"
   >
     <template v-slot:item.date_acquired="{ item }">
       {{ item.date_acquired ? formatDate(item.date_acquired) : "" }}
