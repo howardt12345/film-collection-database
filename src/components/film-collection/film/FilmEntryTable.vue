@@ -194,6 +194,7 @@ const filteredFilms = computed(() => {
         variant="outlined"
         hide-details
         single-line
+        clearable
       ></v-text-field>
     </template>
     <v-data-table
