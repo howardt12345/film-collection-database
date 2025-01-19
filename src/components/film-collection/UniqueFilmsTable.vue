@@ -40,7 +40,7 @@ const uniqueFilms = computed(() => {
     }
   });
 
-  return Array.from(filmMap.values());
+  return Array.from(filmMap.values()).sort((a, b) => (b.totalQuantity - b.totalUsed) - (a.totalQuantity - a.totalUsed));
 });
 
 const headers = [
