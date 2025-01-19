@@ -508,7 +508,7 @@ const confirmDeleteCamera = (camera: Camera) => {
         New Event
       </v-btn>
       <v-btn color="primary" @click="createCameraDialog = true">
-        Add Camera
+        New Camera
       </v-btn>
     </div>
 
