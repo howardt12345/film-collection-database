@@ -156,6 +156,8 @@ const handleEditSave = (
           class="ma-1"
           size="small"
           :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
+          style="cursor: pointer"
+          @click="$router.push({ query: { search: `${film.brand} ${film.name}` } })"
         >
           {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
         </v-chip>

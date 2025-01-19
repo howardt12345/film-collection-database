@@ -62,13 +62,20 @@ const currentSearch = ref(route.query.search?.toString() || "");
 const handleSearchChange = (value: string) => {
   currentSearch.value = value;
   // Update URL without triggering navigation
-  router.replace({
+  router.push({
     query: {
       ...route.query,
       search: value || undefined, // Remove search param if empty
     },
   });
 };
+
+watch(route, (route) => {
+  if (route.query.search) {
+    currentTab.value = 0;
+    handleSearchChange(route.query.search?.toString() || "");
+  }
+});
 
 const uniqueNames = computed(() => {
   const nameFrequency = filmCollections.value.reduce(
@@ -545,7 +552,7 @@ const confirmDeleteCamera = (camera: Camera) => {
           :events="filmEvents"
           :events-by-film="eventsByFilm"
           :unique-events="uniqueEvents"
-          :initial-search="currentSearch"
+          :search="currentSearch"
           @edit="editFilm"
           @copy="copyFilm"
           @delete="confirmDeleteFilm"

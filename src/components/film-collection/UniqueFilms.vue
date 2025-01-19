@@ -143,7 +143,7 @@ const brandHeaders = [
       </v-toolbar>
     </template>
     <template v-slot:item.brand="{ item }">
-      <v-chip size="small" :color="getBrandColor(item.brand)">
+      <v-chip size="small" :color="getBrandColor(item.brand)" style="cursor: pointer" @click="$router.push({ query: { search: item.brand } })">
         {{ item.brand }}
       </v-chip>
     </template>
@@ -183,13 +183,13 @@ const brandHeaders = [
       </v-toolbar>
     </template>
     <template v-slot:item.brand="{ item }">
-      <v-chip size="small" :color="getBrandColor(item.brand)">
+      <v-chip size="small" :color="getBrandColor(item.brand)" style="cursor: pointer" @click="$router.push({ query: { search: item.brand } })">
         {{ item.brand }}
       </v-chip>
     </template>
 
     <template v-slot:item.name="{ item }">
-      <v-chip size="small" :color="getFilmNameColor(item.name)">
+      <v-chip size="small" :color="getFilmNameColor(item.name)" style="cursor: pointer" @click="$router.push({ query: { search: item.name } })">
         {{ item.name }}
       </v-chip>
     </template>

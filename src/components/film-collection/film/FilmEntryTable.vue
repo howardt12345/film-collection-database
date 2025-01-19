@@ -19,7 +19,7 @@ const props = defineProps<{
   films: FilmEntry[];
   uniqueEvents: string[];
   eventsByFilm: Record<number, Event[]>;
-  initialSearch?: string;
+  search?: string;
 }>();
 
 const emit = defineEmits<{
@@ -50,7 +50,7 @@ const filmHeaders = [
   { title: "Latest Event Date", key: "latest_event.date", sortable: true },
 ];
 
-const search = ref(props.initialSearch || "");
+const search = ref(props.search || "");
 
 const expandedItem = ref<string[]>([]);
 
@@ -154,6 +154,11 @@ const allEvents = computed(() =>
 watch(search, (newValue) => {
   emit("searchChange", newValue);
 });
+
+// Watch for search prop changes and update the search ref
+watch(() => props.search, (newValue) => {
+  search.value = newValue || "";
+});
 </script>
 
 <template>
@@ -217,6 +222,8 @@ watch(search, (newValue) => {
           :color="getBrandColor(item.brand)"
           :text-color="getBrandColor(item.brand) ? 'white' : ''"
           small
+          style="cursor: pointer"
+          @click="emit('searchChange', item.brand)"
         >
           {{ item.brand }}
         </v-chip>
@@ -227,6 +234,8 @@ watch(search, (newValue) => {
           :color="getFilmNameColor(item.name)"
           :text-color="getFilmNameColor(item.name) ? 'white' : ''"
           small
+          style="cursor: pointer"
+          @click="emit('searchChange', item.name)"
         >
           {{ item.name }}
         </v-chip>

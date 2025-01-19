@@ -2,10 +2,8 @@
 import { ref, onMounted } from "vue";
 import { supabase } from "@/api/supabase";
 import { Session } from "@supabase/supabase-js";
-import { useRouter } from "vue-router";
 
 const session = ref<Session | null>();
-const router = useRouter();
 
 onMounted(() => {
   supabase.auth.getSession().then(({ data }) => {
