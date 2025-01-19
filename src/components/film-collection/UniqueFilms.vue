@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { FilmEntry } from "@/types/film-collection";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
 
@@ -128,6 +128,26 @@ const brandHeaders = [
     value: (item: BrandFilmStats) => item.totalQuantity,
   },
 ];
+
+const search = ref("");
+const filteredUniqueFilms = computed(() => {
+  return uniqueFilms.value.filter((film) => {
+    const searchTerms = search.value.toLowerCase().split(" ");
+    const attributes = [
+      film.name.toLowerCase(),
+      film.brand.toLowerCase(),
+      `${film.brand} ${film.name}`.toLowerCase(),
+      film.film_format.toLowerCase(),
+      film.film_type.toLowerCase(),
+      `ISO ${film.iso}`.toLowerCase(),
+    ];
+
+    return searchTerms.every(term =>
+      attributes.some(attribute => attribute.includes(term))
+    );
+  });
+});
+
 </script>
 
 <template>
@@ -173,13 +193,22 @@ const brandHeaders = [
 
   <v-data-table
     :headers="headers"
-    :items="uniqueFilms"
+    :items="filteredUniqueFilms"
     class="elevation-1"
     :items-per-page="-1"
   >
     <template v-slot:top>
       <v-toolbar flat>
         <v-toolbar-title>Available Unique Films</v-toolbar-title>
+        <v-text-field
+          v-model="search"
+          label="Search"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          hide-details
+          single-line
+          clearable
+        ></v-text-field>
       </v-toolbar>
     </template>
     <template v-slot:item.brand="{ item }">
