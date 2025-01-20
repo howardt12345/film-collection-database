@@ -47,6 +47,8 @@ const filmHeaders = [
   { title: "ISO", key: "iso" },
   { title: "Format", key: "film_format" },
   { title: "Type", key: "film_type" },
+  { title: "Rare", key: "rare" },
+  { title: "Frozen", key: "date_frozen" },
   { title: "Latest Event Date", key: "latest_event.date", sortable: true },
 ];
 
@@ -66,38 +68,46 @@ const updateUsed = (item: FilmEntry, increment: number) => {
 };
 
 // Function to get the number of months until the expiry date
-const getExpiryStatus = (expiryDate: string | undefined) => {
-  if (!expiryDate) {
-    return "Unknown expiry date";
-  }
-  const now = new Date();
-  const expiry = new Date(expiryDate);
-  const monthsDiff = differenceInMonths(expiry, now);
+const getExpiryStatus = (item: FilmEntry) => {
+  const expiryDate = item.expiry_date;
 
-  if (monthsDiff > 12) {
-    const yearsDiff = Math.floor(monthsDiff / 12);
-    return `${yearsDiff} year${yearsDiff > 1 ? "s" : ""} left`;
-  } else if (monthsDiff > 1) {
-    return `${monthsDiff} months left`;
-  } else if (monthsDiff === 1) {
-    return "1 month left";
-  } else if (monthsDiff === 0) {
-    return "Expires this month";
+  let status = "";
+
+  if (!expiryDate) {
+    status = "Unknown expiry date";
   } else {
-    const pastMonths = Math.abs(monthsDiff);
-    if (pastMonths > 12) {
-      const pastYears = Math.floor(pastMonths / 12);
-      return `Expired ${pastYears} year${pastYears > 1 ? "s" : ""} ago`;
-    } else if (pastMonths === 1) {
-      return `Expired 1 month ago`;
+    const now = new Date();
+    const expiry = new Date(expiryDate);
+    const monthsDiff = differenceInMonths(expiry, now);
+
+    if (monthsDiff > 12) {
+      const yearsDiff = Math.floor(monthsDiff / 12);
+      status = `${yearsDiff} year${yearsDiff > 1 ? "s" : ""} left`;
+    } else if (monthsDiff > 1) {
+      status = `${monthsDiff} months left`;
+    } else if (monthsDiff === 1) {
+      status = "1 month left";
+    } else if (monthsDiff === 0) {
+      status = "Expires this month";
     } else {
-      return `Expired ${pastMonths} months ago`;
+      const pastMonths = Math.abs(monthsDiff);
+      if (pastMonths > 12) {
+        const pastYears = Math.floor(pastMonths / 12);
+        status = `Expired ${pastYears} year${pastYears > 1 ? "s" : ""} ago`;
+      } else if (pastMonths === 1) {
+        status = `Expired 1 month ago`;
+      } else {
+        status = `Expired ${pastMonths} months ago`;
+      }
     }
   }
+
+  return status;
 };
 
-// Function to determine the CSS class based on the expiry date
-const getExpiryDateClass = (expiryDate: string | undefined) => {
+// Function to determine the CSS class based on the expiry date and latest event
+const getExpiryDateClass = (item: FilmEntry) => {
+  const expiryDate = item.expiry_date;
   if (!expiryDate) {
     return "text-error"; // No expiry date -> text-error
   }
@@ -156,14 +166,17 @@ watch(search, (newValue) => {
 });
 
 // Watch for search prop changes and update the search ref
-watch(() => props.search, (newValue) => {
-  search.value = newValue || "";
-});
+watch(
+  () => props.search,
+  (newValue) => {
+    search.value = newValue || "";
+  },
+);
 
 const filteredFilms = computed(() => {
-  const searchTerms = search.value.trim().toLowerCase().split(' ');
+  const searchTerms = search.value.trim().toLowerCase().split(" ");
 
-  return props.films.filter(film => {
+  return props.films.filter((film) => {
     const attributes = [
       film.name.toLowerCase(),
       film.brand.toLowerCase(),
@@ -174,14 +187,11 @@ const filteredFilms = computed(() => {
       `ISO ${film.iso}`.toLowerCase(),
     ];
 
-    return searchTerms.every(term =>
-      attributes.some(attribute => attribute.includes(term))
+    return searchTerms.every((term) =>
+      attributes.some((attribute) => attribute.includes(term)),
     );
   });
 });
-
-
-
 </script>
 
 <template>
@@ -236,6 +246,28 @@ const filteredFilms = computed(() => {
         </v-menu>
       </template>
 
+      <template #item.rare="{ item }">
+        <v-icon v-if="item.rare" color="secondary">mdi-check</v-icon>
+        <v-icon v-else color="warning">mdi-close</v-icon>
+      </template>
+
+      <template #item.date_frozen="{ item }">
+        <v-tooltip
+          :text="
+            item.date_frozen
+              ? `Frozen since ${formatDate(item.date_frozen)}`
+              : 'Film not currently frozen'
+          "
+          location="top"
+        >
+          <template v-slot:activator="{ props }">
+            <v-icon v-if="item.date_frozen && item.quantity - item.used > 0" color="primary" v-bind="props"
+              >mdi-snowflake</v-icon
+            >
+          </template>
+        </v-tooltip>
+      </template>
+
       <template #item.date_acquired="{ item }">
         {{ formatDate(item.date_acquired) }}
       </template>
@@ -265,13 +297,11 @@ const filteredFilms = computed(() => {
       </template>
 
       <template #item.expiry_date="{ item }">
-        <v-tooltip :text="getExpiryStatus(item.expiry_date)" location="top">
+        <v-tooltip :text="getExpiryStatus(item)" location="top">
           <template v-slot:activator="{ props }">
-            <span
-              :class="getExpiryDateClass(item.expiry_date)"
-              v-bind="props"
-              >{{ item.expiry_date || "N/A" }}</span
-            >
+            <span :class="getExpiryDateClass(item)" v-bind="props">{{
+              item.expiry_date || "N/A"
+            }}</span>
           </template>
         </v-tooltip>
       </template>

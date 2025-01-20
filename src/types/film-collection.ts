@@ -42,10 +42,12 @@ export interface FilmEntry {
   album_url?: string;
   device?: string;
   notes?: string;
+  rare?: boolean;
   latest_event?: {
     date: Date;
     event_type: string;
   };
+  date_frozen?: Date;
 };
 
 export interface Camera {

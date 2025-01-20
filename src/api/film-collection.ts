@@ -51,6 +51,13 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
         ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0] || null,
     created_at: new Date(entry.created_at),
     date_acquired: new Date(entry.date_acquired),
+    date_frozen: entry.film_entry_events
+      ?.map((fee) => ({
+        ...fee.film_events,
+        date: new Date(fee.film_events.date),
+      }))
+      ?.filter((event) => event.event_type.toLowerCase() === "frozen")
+      ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0]?.date || undefined,
   }));
 };
 

@@ -21,6 +21,8 @@ interface BrandFilmStats {
   brand: string;
   totalQuantity: number;
   totalUsed: number;
+  totalRareAcquired: number;
+  totalRareUsed: number;
 }
 
 const uniqueFilms = computed(() => {
@@ -65,11 +67,15 @@ const filmsByBrand = computed(() => {
         brand: film.brand,
         totalQuantity: film.quantity || 0,
         totalUsed: film.used || 0,
+        totalRareAcquired: film.rare ? (film.quantity || 0) : 0,
+        totalRareUsed: film.rare ? (film.used || 0) : 0,
       });
     } else {
       const existing = brandMap.get(film.brand)!;
       existing.totalQuantity += film.quantity || 0;
       existing.totalUsed += film.used || 0;
+      existing.totalRareAcquired += film.rare ? (film.quantity || 0) : 0;
+      existing.totalRareUsed += film.rare ? (film.used || 0) : 0;
     }
   });
 
@@ -126,6 +132,18 @@ const brandHeaders = [
     key: "total",
     sortable: true,
     value: (item: BrandFilmStats) => item.totalQuantity,
+  },
+  {
+    title: "Rare Acquired",
+    key: "rareAcquired",
+    sortable: true,
+    value: (item: BrandFilmStats) => item.totalRareAcquired,
+  },
+  {
+    title: "Rare Used",
+    key: "rareUsed",
+    sortable: true,
+    value: (item: BrandFilmStats) => item.totalRareUsed,
   },
 ];
 

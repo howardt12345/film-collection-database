@@ -50,6 +50,11 @@ const updateField = (field: keyof FilmEntry, value: any) => {
       allow-new-values
       :rules="[(v) => !!v || 'Name is required']"
     ></v-combobox>
+    <v-checkbox
+      :model-value="film.rare"
+      @update:model-value="updateField('rare', $event)"
+      label="Is Rare Film"
+    ></v-checkbox>
     <v-text-field
       :model-value="film.iso"
       @update:model-value="updateField('iso', Number($event))"
@@ -74,8 +79,8 @@ const updateField = (field: keyof FilmEntry, value: any) => {
       item-title="[1]"
       item-value="[1]"
       required
-    ></v-select
-    ><v-text-field
+    ></v-select>
+    <v-text-field
       :model-value="film.quantity"
       @update:model-value="updateField('quantity', Number($event))"
       label="Quantity"
