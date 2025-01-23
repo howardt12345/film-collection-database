@@ -51,14 +51,29 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
         ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0] || null,
     created_at: new Date(entry.created_at),
     date_acquired: new Date(entry.date_acquired),
-    date_frozen: entry.film_entry_events
-      ?.map((fee) => ({
-        ...fee.film_events,
-        date: new Date(fee.film_events.date),
-      }))
-      ?.filter((event) => event.event_type.toLowerCase() === "frozen")
-      ?.sort((a, b) => b.date.getTime() - a.date.getTime())[0]?.date || undefined,
+    date_frozen: getLatestFrozenDate(entry)
   }));
+};
+
+const getLatestFrozenDate = (entry: FilmEntryResponse) => {
+  const events = entry.film_entry_events?.map((fee) => ({
+    ...fee.film_events,
+    date: new Date(fee.film_events.date),
+  })) || [];
+
+  const latestFrozen = events
+    .filter((event) => event.event_type.toLowerCase() === "frozen")
+    .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+
+  if (!latestFrozen) return undefined;
+
+  const hasLaterThaw = events.some(
+    (event) =>
+      event.event_type.toLowerCase() === "thawed" &&
+      event.date > latestFrozen.date
+  );
+
+  return hasLaterThaw ? undefined : latestFrozen.date;
 };
 
 export const createFilmCollection = async (
