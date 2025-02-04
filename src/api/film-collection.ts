@@ -99,7 +99,7 @@ export const updateFilmCollection = async (
   updatedData: Partial<FilmEntry>,
 ): Promise<FilmEntry> => {
   // Clean the data before sending to API
-  const { film_entry_events, latest_event, created_at, ...cleanData } =
+  const { film_entry_events, latest_event, created_at, date_frozen, ...cleanData } =
     updatedData as any;
 
   const { data, error } = await supabase
