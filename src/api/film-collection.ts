@@ -73,7 +73,7 @@ const getLatestFrozenDate = (entry: FilmEntryResponse) => {
       event.date > latestFrozen.date
   );
 
-  return hasLaterThaw ? undefined : latestFrozen.date;
+  return (hasLaterThaw && entry.quantity === entry.used) ? undefined : latestFrozen.date;
 };
 
 export const createFilmCollection = async (
