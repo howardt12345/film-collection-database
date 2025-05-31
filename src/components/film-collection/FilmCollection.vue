@@ -205,7 +205,7 @@ const editFilm = (film: FilmEntry) => {
   editDialogVisible.value = true;
 };
 
-const copyFilm = (film: FilmEntry) => {
+const copyFilm = (film: Omit<FilmEntry, "date_frozen">) => {
   copyingFilm.value = { ...film };
   copyDialogVisible.value = true;
 };
