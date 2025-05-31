@@ -77,7 +77,7 @@ const getLatestFrozenDate = (entry: FilmEntryResponse) => {
 };
 
 export const createFilmCollection = async (
-  filmCollection: Omit<FilmEntry, "id" | "created_at">,
+  filmCollection: Omit<FilmEntry, "id" | "created_at" | "date_frozen">,
 ): Promise<FilmEntry> => {
   const { data, error } = await supabase
     .schema("film_collection")
