@@ -2,8 +2,13 @@
 import { ref, computed, watch } from "vue";
 import FilmEventLogTable from "./FilmEventLogTable.vue";
 import { Event, FilmEntry } from "@/types/film-collection";
-import { formatDate } from "@/utils";
+import { useDateFormatting } from "@/composables/useDateFormatting";
+import { useEventsStore } from "@/stores/events";
 import VueMarkdown from "vue-markdown-render";
+
+const eventsStore = useEventsStore();
+
+const { formatDate } = useDateFormatting();
 import {
   differenceInMonths,
   isBefore,
@@ -17,7 +22,6 @@ import AddEventToFilmDialog from "./AddEventToFilmDialog.vue";
 
 const props = defineProps<{
   films: FilmEntry[];
-  uniqueEvents: string[];
   eventsByFilm: Record<number, Event[]>;
   search?: string;
 }>();
@@ -27,11 +31,11 @@ const emit = defineEmits<{
   (e: "copy", film: FilmEntry): void;
   (e: "delete", film: FilmEntry): void;
   (e: "removeEventFromFilm", filmId: number, eventId: number): void;
-  (e: "addExistingEventToFilm", filmId: number, eventId: number): void;
+  (e: "addExistingEventToFilm", filmId: number, eventId: number, quantity?: number): void;
   (
     e: "createAndAddEventToFilm",
     filmId: number,
-    event: Omit<Event, "id">,
+    event: Omit<Event, "id"> & { quantity?: number },
   ): void;
   (e: "updateUsed", filmId: number, used: number): void;
   (e: "searchChange", value: string): void;
@@ -139,13 +143,13 @@ const openAddEventDialog = (film: FilmEntry) => {
   addEventDialog.value = true;
 };
 
-const handleEventAdd = (eventId: number) => {
+const handleEventAdd = (eventId: number, quantity?: number) => {
   if (selectedFilmForEvent.value) {
-    emit("addExistingEventToFilm", selectedFilmForEvent.value.id, eventId);
+    emit("addExistingEventToFilm", selectedFilmForEvent.value.id, eventId, quantity);
   }
 };
 
-const handleEventCreate = (event: Omit<Event, "id">) => {
+const handleEventCreate = (event: Omit<Event, "id"> & { quantity?: number }) => {
   if (selectedFilmForEvent.value) {
     emit("createAndAddEventToFilm", selectedFilmForEvent.value.id, event);
   }
@@ -421,7 +425,7 @@ const filteredFilms = computed(() => {
     <AddEventToFilmDialog
       v-model="addEventDialog"
       :existing-events="allEvents"
-      :unique-events="uniqueEvents"
+      :unique-events="eventsStore.uniqueEventTypeNames"
       @select-event="handleEventAdd"
       @create-event="handleEventCreate"
     />

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Camera } from "@/types/film-collection";
-import { formatDate } from "@/utils";
+import { useDateFormatting } from "@/composables/useDateFormatting";
+
+const { formatDate } = useDateFormatting();
 
 const props = defineProps<{
   cameras: Camera[];

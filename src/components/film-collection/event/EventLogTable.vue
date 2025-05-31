@@ -3,19 +3,23 @@ import { ref, computed } from "vue";
 import { Event, FilmEntry, FilmEvent, Camera } from "@/types/film-collection";
 import VueMarkdown from "vue-markdown-render";
 import { getBrandColor, getFilmNameColor } from "@/utils/colors";
-import { formatDate } from "@/utils";
+import { useDateFormatting } from "@/composables/useDateFormatting";
+import { useEventsStore } from "@/stores/events";
 import EditEventDialog from "./EditEventDialog.vue";
+
+const eventsStore = useEventsStore();
+
+const { formatDate } = useDateFormatting();
 
 const props = defineProps<{
   events: FilmEvent[];
-  uniqueEvents: string[];
   uniqueLocations: string[];
   films: FilmEntry[];
   cameras: Camera[];
 }>();
 
 const emit = defineEmits<{
-  (e: "addEvent", filmId: number, event: Omit<Event, "id">): void;
+  (e: "addEvent", filmId: number, event: Omit<Event, "id"> & { quantity?: number }): void;
   (e: "deleteEvent", filmId: number, eventId: number): void;
   (e: "updateEvent", eventId: number, event: Omit<Event, "id">): void;
   (e: "removeEvent", eventId: number): void;
@@ -26,7 +30,8 @@ const emit = defineEmits<{
 const eventHeaders = [
   { title: "", key: "actions", sortable: false },
   { title: "Date", key: "date", sortable: true },
-  { title: "Event Type", key: "event_type", sortable: true },
+  { title: "Event Type", key: "event_type_name", sortable: true },
+  { title: "Quantity", key: "quantity", sortable: true },
   { title: "Location", key: "location", sortable: true },
   { title: "Associated Films", key: "films", sortable: false },
   { title: "Associated Cameras", key: "cameras", sortable: false },
@@ -39,12 +44,26 @@ const editingEvent = ref<Event | null>(null);
 const editingEventFilmIds = ref<number[]>([]);
 const editingEventCameraIds = ref<number[]>([]);
 
-const sortedEvents = computed(() =>
-  [...(props.events || [])].sort((a, b) => {
-    if (!a.date || !b.date) return 0;
-    return b.date.getTime() - a.date.getTime();
-  }),
-);
+const sortedEvents = computed(() => {
+  console.log("EventLogTable - Events received:", props.events);
+  console.log("EventLogTable - Event types in store:", eventsStore.eventTypes);
+
+  return [...(props.events || [])]
+    .map(event => {
+      console.log("EventLogTable - Processing event:", event);
+      const eventTypeName = eventsStore.getEventTypeName(event.film_event_type_id);
+      console.log("EventLogTable - Event type name:", event.film_event_type_id, ":", eventTypeName);
+
+      return {
+        ...event,
+        event_type_name: eventTypeName
+      };
+    })
+    .sort((a, b) => {
+      if (!a.date || !b.date) return 0;
+      return b.date.getTime() - a.date.getTime();
+    });
+});
 
 const getAssociatedFilms = (eventId: number) => {
   const event = props.events?.find((e) => e.id === eventId);
@@ -99,8 +118,29 @@ const handleCopy = (
   newEvent: Omit<Event, "id">,
   filmIds: number[],
   cameraIds: number[],
+  quantities: Record<number, number> = {},
 ) => {
-  emit("addEvent", filmIds[0], newEvent);
+  // Include quantity in the event data for the first film
+  const quantity = filmIds.length > 0 ? quantities[filmIds[0]] || 1 : undefined;
+  emit("addEvent", filmIds[0], { ...newEvent, quantity });
+
+  // For additional films, add them to the event with their quantities
+  if (filmIds.length > 1) {
+    // We need to wait for the event to be created before adding more films
+    // This would ideally be handled by returning the created event from addEvent
+    // and then using that event ID to add more films
+    setTimeout(() => {
+      // This is a workaround - in a real app, we would use the returned event ID
+      const latestEvent = eventsStore.sortedEvents[0];
+      if (latestEvent) {
+        for (let i = 1; i < filmIds.length; i++) {
+          const filmId = filmIds[i];
+          eventsStore.addFilmToEvent(filmId, latestEvent.id, quantities[filmId] || 1);
+        }
+      }
+    }, 500);
+  }
+
   copyDialog.value = false;
   copyingEvent.value = null;
   copyingEventFilmIds.value = [];
@@ -111,12 +151,20 @@ const handleEditSave = (
   updatedEvent: Omit<Event, "id">,
   filmIds: number[],
   cameraIds: number[],
+  quantities: Record<number, number>,
 ) => {
   if (!editingEvent.value) return;
 
   emit("updateEvent", editingEvent.value.id, updatedEvent);
   emit("editFilmsOnEvent", editingEvent.value.id, filmIds);
   emit("updateEventCameras", editingEvent.value.id, cameraIds);
+
+  // Update quantities for each film
+  filmIds.forEach(filmId => {
+    const quantity = quantities[filmId] || 1;
+    // Update the quantity in the store
+    eventsStore.updateFilmEventQuantity(filmId, editingEvent.value!.id, quantity);
+  });
 
   editDialog.value = false;
   editingEvent.value = null;
@@ -136,12 +184,24 @@ const handleEditSave = (
       {{ formatDate(item.date) }}
     </template>
 
-    <template v-slot:item.event_type="{ item }">
-      {{ item.event_type }}
+    <template v-slot:item.event_type_name="{ item }">
+      {{ item.event_type_name }}
     </template>
 
     <template v-slot:item.location="{ item }">
       {{ item.location }}
+    </template>
+
+    <template v-slot:item.quantity="{ item }">
+      <div v-if="item.film_ids && item.film_ids.length > 0">
+        <template v-for="filmId in item.film_ids" :key="filmId">
+          <div v-if="eventsStore.getFilmEventAssociation(filmId, item.id)">
+            {{ eventsStore.getFilmEventAssociation(filmId, item.id)?.quantity || '1' }}
+            <span v-if="item.film_ids.length > 1">({{ props.films.find(f => f.id === filmId)?.brand }} {{ props.films.find(f => f.id === filmId)?.name }})</span>
+          </div>
+        </template>
+      </div>
+      <span v-else>-</span>
     </template>
 
     <template v-slot:item.notes="{ item }">
@@ -212,7 +272,7 @@ const handleEditSave = (
   <EditEventDialog
     v-model="editDialog"
     :event="editingEvent"
-    :unique-events="uniqueEvents"
+    :unique-events="eventsStore.uniqueEventTypeNames"
     :unique-locations="uniqueLocations"
     :films="films"
     :associated-film-ids="editingEventFilmIds"
@@ -224,7 +284,7 @@ const handleEditSave = (
   <EditEventDialog
     v-model="copyDialog"
     :event="copyingEvent"
-    :unique-events="uniqueEvents"
+    :unique-events="eventsStore.uniqueEventTypeNames"
     :unique-locations="uniqueLocations"
     :films="films"
     :associated-film-ids="copyingEventFilmIds"

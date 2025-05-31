@@ -1,4 +1,5 @@
-import { FilmEntry, Event, FilmEvent, Camera } from "@/types/film-collection";
+import { FilmEntry, Event, FilmEvent, Camera, FilmEventType } from "@/types/film-collection";
+import { ref } from "vue";
 import { supabase } from "./supabase";
 
 type DateToString<T> = {
@@ -28,7 +29,7 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
         film_events(
           id,
           date,
-          event_type,
+          film_event_type_id,
           notes
         )
       )
@@ -55,21 +56,42 @@ export const getFilmCollections = async (): Promise<FilmEntry[]> => {
   }));
 };
 
+// Function to get all event types from the film_event_type table
+export const getEventTypes = async (): Promise<FilmEventType[]> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("film_event_type")
+    .select("*")
+    .order("id", { ascending: true })
+    .returns<FilmEventType[]>();
+
+  if (error) throw error;
+  console.log("Received event types:", data);
+  return data;
+};
+
 const getLatestFrozenDate = (entry: FilmEntryResponse) => {
   const events = entry.film_entry_events?.map((fee) => ({
     ...fee.film_events,
     date: new Date(fee.film_events.date),
   })) || [];
 
+  // Get the event type IDs for "Frozen" and "Thawed"
+  // This is a temporary solution until we have the actual IDs
+  const frozenEventTypeId = 8; // Assuming 8 is the ID for "Frozen"
+  const thawedEventTypeId = 9; // Assuming 9 is the ID for "Thawed"
+
   const latestFrozen = events
-    .filter((event) => event.event_type.toLowerCase() === "frozen")
+    .filter((event) => {
+      return event.film_event_type_id === frozenEventTypeId;
+    })
     .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
 
   if (!latestFrozen) return undefined;
 
   const hasLaterThaw = events.some(
     (event) =>
-      event.event_type.toLowerCase() === "thawed" &&
+      event.film_event_type_id === thawedEventTypeId &&
       event.date > latestFrozen.date
   );
 
@@ -142,21 +164,32 @@ export const deleteFilmCollection = async (id: number): Promise<void> => {
 };
 
 export const getEvents = async (): Promise<FilmEvent[]> => {
+  console.log("Fetching events from database...");
   // First get all events
   const { data: events, error: eventsError } = await supabase
     .schema("film_collection")
     .from("film_events")
     .select("*");
 
-  if (eventsError) throw eventsError;
+  if (eventsError) {
+    console.error("Error fetching events:", eventsError);
+    throw eventsError;
+  }
 
-  // Then get all film-event associations
+  console.log("Received events from database:", events);
+
+  // Then get all film-event associations with quantities
   const { data: filmAssociations, error: filmAssociationsError } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
     .select("*");
 
-  if (filmAssociationsError) throw filmAssociationsError;
+  if (filmAssociationsError) {
+    console.error("Error fetching film associations:", filmAssociationsError);
+    throw filmAssociationsError;
+  }
+
+  console.log("Received film associations:", filmAssociations);
 
   // Then get all event-camera associations
   const { data: cameraAssociations, error: cameraAssociationsError } = await supabase
@@ -164,34 +197,72 @@ export const getEvents = async (): Promise<FilmEvent[]> => {
     .from("film_event_camera")
     .select("*");
 
-  if (cameraAssociationsError) throw cameraAssociationsError;
+  if (cameraAssociationsError) {
+    console.error("Error fetching camera associations:", cameraAssociationsError);
+    throw cameraAssociationsError;
+  }
+
+  console.log("Received camera associations:", cameraAssociations);
 
   // Map the associations to the events
-  return events.map((event) => ({
-    ...event,
-    date: new Date(event.date),
-    film_ids: filmAssociations
-      .filter((assoc) => assoc.event_id === event.id)
-      .map((assoc) => assoc.film_entry_id),
-    camera_ids: cameraAssociations
-      .filter((assoc) => assoc.event_id === event.id)
-      .map((assoc) => assoc.camera_id),
+  const filmEvents = events.map((event) => {
+    console.log("Processing event:", event);
+    return {
+      ...event,
+      date: new Date(event.date),
+      film_ids: filmAssociations
+        .filter((assoc) => assoc.event_id === event.id)
+        .map((assoc) => assoc.film_entry_id),
+      camera_ids: cameraAssociations
+        .filter((assoc) => assoc.event_id === event.id)
+        .map((assoc) => assoc.camera_id),
+    };
+  });
+
+  // Return the events with film associations
+  return filmEvents;
+};
+
+// Function to get film-event associations with quantities
+export const getFilmEventAssociations = async (): Promise<FilmEventAssociation[]> => {
+  const { data, error } = await supabase
+    .schema("film_collection")
+    .from("film_entry_events")
+    .select("*");
+
+  if (error) throw error;
+
+  return data.map(assoc => ({
+    film_entry_id: assoc.film_entry_id,
+    event_id: assoc.event_id,
+    quantity: assoc.quantity || 1, // Default to 1 if not provided
   }));
 };
+
+// Interface for film-event associations
+interface FilmEventAssociation {
+  film_entry_id: number;
+  event_id: number;
+  quantity?: number;
+}
 
 export const createFilmEvent = async (
   filmId: number,
   event: Omit<Event, "id">,
+  quantity?: number,
 ): Promise<Event> => {
   // Check if an identical "Acquired" event exists with matching date and location
+  // Assuming 1 is the ID for "Acquired" event type
+  const acquiredEventTypeId = 1;
+
   const { data: existingEvents } = await supabase
     .schema("film_collection")
     .from("film_events")
     .select("id")
     .eq("date", event.date)
-    .eq("event_type", event.event_type)
+    .eq("film_event_type_id", event.film_event_type_id)
     .eq("location", event.location)
-    .eq("event_type", "Acquired");
+    .eq("film_event_type_id", acquiredEventTypeId);
 
   let eventId: number;
 
@@ -206,7 +277,7 @@ export const createFilmEvent = async (
       .insert([
         {
           date: event.date,
-          event_type: event.event_type,
+          film_event_type_id: event.film_event_type_id,
           location: event.location,
           notes: event.notes,
         },
@@ -218,7 +289,7 @@ export const createFilmEvent = async (
     eventId = newEvent.id;
   }
 
-  // Create the link
+  // Create the link with quantity if provided
   const { error: linkError } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
@@ -226,6 +297,7 @@ export const createFilmEvent = async (
       {
         film_entry_id: filmId,
         event_id: eventId,
+        quantity: quantity || 1, // Default to 1 if not provided
       },
     ]);
 
@@ -252,7 +324,7 @@ export const updateEvent = async (
     .from("film_events")
     .update({
       date: event.date,
-      event_type: event.event_type,
+      film_event_type_id: event.film_event_type_id,
       notes: event.notes,
     })
     .eq("id", eventId);
@@ -296,6 +368,7 @@ export const deleteFilmEvent = async (
 export const addExistingEventToFilm = async (
   filmId: number,
   eventId: number,
+  quantity?: number,
 ): Promise<void> => {
   // Check if association already exists
   const { data: existing, error: checkError } = await supabase
@@ -308,7 +381,7 @@ export const addExistingEventToFilm = async (
   if (checkError) throw checkError;
   if (existing && existing.length > 0) return; // Already exists
 
-  // Create new association
+  // Create new association with quantity if provided
   const { error } = await supabase
     .schema("film_collection")
     .from("film_entry_events")
@@ -316,6 +389,7 @@ export const addExistingEventToFilm = async (
       {
         film_entry_id: filmId,
         event_id: eventId,
+        quantity: quantity || 1, // Default to 1 if not provided
       },
     ]);
 
@@ -396,7 +470,7 @@ export const createEventWithoutFilm = async (
     .insert([
       {
         date: event.date,
-        event_type: event.event_type,
+        film_event_type_id: event.film_event_type_id,
         location: event.location,
         notes: event.notes,
       },

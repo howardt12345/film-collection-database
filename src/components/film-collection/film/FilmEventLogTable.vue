@@ -2,10 +2,15 @@
 import { computed } from "vue";
 import VueMarkdown from "vue-markdown-render";
 import { Event } from "@/types/film-collection";
-import { formatDate } from "@/utils";
+import { useDateFormatting } from "@/composables/useDateFormatting";
+import { useEventsStore } from "@/stores/events";
+
+const { formatDate } = useDateFormatting();
+const eventsStore = useEventsStore();
 
 const props = defineProps<{
   events: Event[];
+  filmId?: number;
 }>();
 
 const emit = defineEmits<{
@@ -13,18 +18,20 @@ const emit = defineEmits<{
 }>();
 
 const eventHeaders = [
-  { title: "Date", key: "date", sortable: true, width: "27%" },
-  { title: "Event", key: "event_type", sortable: true, width: "25%" },
-  { title: "Location", key: "location", sortable: true, width: "25%" },
+  { title: "Date", key: "date", sortable: true, width: "20%" },
+  { title: "Event", key: "event_type", sortable: true, width: "20%" },
+  { title: "Quantity", key: "quantity", sortable: true, width: "10%" },
+  { title: "Location", key: "location", sortable: true, width: "20%" },
   { title: "Notes", key: "notes", sortable: false, width: "auto" },
-  { title: "Actions", key: "actions", sortable: false, width: "15%" },
+  { title: "Actions", key: "actions", sortable: false, width: "10%" },
 ];
 
-const sortedEvents = computed(() =>
-  [...props.events].sort(
+const sortedEvents = computed(() => {
+  console.log("FilmEventLogTable - Events received:", props.events);
+  return [...props.events].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  ),
-);
+  );
+});
 </script>
 
 <template>
@@ -39,7 +46,11 @@ const sortedEvents = computed(() =>
     </template>
 
     <template v-slot:item.event_type="{ item }">
-      {{ item.event_type }}
+      {{ eventsStore.getEventTypeName(item.film_event_type_id) }}
+    </template>
+
+    <template v-slot:item.quantity="{ item }">
+      {{ props.filmId ? (eventsStore.getFilmEventAssociation(props.filmId, item.id)?.quantity || '-') : '-' }}
     </template>
 
     <template v-slot:item.notes="{ item }">

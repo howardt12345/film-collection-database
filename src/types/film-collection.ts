@@ -12,10 +12,16 @@ export enum FilmFormat {
   _600 = "600",
 }
 
+export interface FilmEventType {
+  id: number;
+  name: string;
+  subtract_quantity: boolean;
+}
+
 export interface Event {
   id: number;
   date: Date;
-  event_type: string;
+  film_event_type_id: number;
   location: string;
   notes: string;
 };
@@ -23,6 +29,7 @@ export interface Event {
 export interface FilmEvent extends Event {
   film_ids: number[];
   camera_ids?: number[];
+  quantity?: number;
 }
 
 export interface FilmEntry {
@@ -45,7 +52,7 @@ export interface FilmEntry {
   rare?: boolean;
   latest_event?: {
     date: Date;
-    event_type: string;
+    film_event_type_id: number;
   };
   date_frozen?: Date;
 };

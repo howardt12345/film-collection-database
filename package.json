@@ -13,6 +13,7 @@
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.45.4",
     "date-fns": "^4.1.0",
+    "pinia": "^3.0.2",
     "roboto-fontface": "*",
     "uuid": "^10.0.0",
     "vue": "^3.4.31",

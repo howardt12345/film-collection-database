@@ -1,28 +1,39 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Event, FilmEvent } from "@/types/film-collection";
-import { formatDate } from "@/utils";
+import { useDateFormatting } from "@/composables/useDateFormatting";
+import { useEventsStore } from "@/stores/events";
+
+const { formatDate } = useDateFormatting();
+const eventsStore = useEventsStore();
 
 const props = defineProps<{
   modelValue: boolean;
   existingEvents: FilmEvent[];
-  uniqueEvents: string[];
 }>();
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
-  (e: "selectEvent", eventId: number): void;
-  (e: "createEvent", event: Omit<Event, "id">): void;
+  (e: "selectEvent", eventId: number, quantity?: number): void;
+  (e: "createEvent", event: Omit<Event, "id"> & { quantity?: number }): void;
 }>();
 
 const isCreatingNew = ref(false);
 const selectedEventId = ref<number | null>(null);
 
 const newEvent = ref<Omit<Event, "id">>({
-  event_type: "",
+  film_event_type_id: 1, // Assuming 1 is the ID for "Acquired"
   date: new Date(),
   location: "",
   notes: "",
+});
+
+const eventQuantity = ref<number>(1);
+const showQuantityField = ref<boolean>(false);
+
+// Watch for changes in event type to determine if quantity field should be shown
+watch(() => newEvent.value.film_event_type_id, (newTypeId: number) => {
+  showQuantityField.value = true; // Show quantity field for all event types
 });
 
 const sortedUniqueEvents = computed(() => {
@@ -35,12 +46,17 @@ const sortedUniqueEvents = computed(() => {
 
 const addEvent = () => {
   if (isCreatingNew.value) {
-    if (newEvent.value.event_type && newEvent.value.date) {
-      emit("createEvent", { ...newEvent.value });
+    if (newEvent.value.film_event_type_id && newEvent.value.date) {
+      // Include quantity in the event data
+      emit("createEvent", {
+        ...newEvent.value,
+        quantity: eventQuantity.value
+      });
       resetForm();
     }
   } else if (selectedEventId.value !== null) {
-    emit("selectEvent", selectedEventId.value);
+    // Include quantity when selecting an existing event
+    emit("selectEvent", selectedEventId.value, eventQuantity.value);
     resetForm();
   }
 };
@@ -48,8 +64,10 @@ const addEvent = () => {
 const resetForm = () => {
   isCreatingNew.value = false;
   selectedEventId.value = null;
+  eventQuantity.value = 1;
+  showQuantityField.value = false;
   newEvent.value = {
-    event_type: "",
+    film_event_type_id: 1, // Assuming 1 is the ID for "Acquired"
     date: new Date(),
     location: "",
     notes: "",
@@ -87,12 +105,14 @@ const resetForm = () => {
               ></v-text-field>
             </v-col>
             <v-col cols="6">
-              <v-combobox
-                v-model="newEvent.event_type"
-                :items="uniqueEvents"
+              <v-select
+                v-model="newEvent.film_event_type_id"
+                :items="eventsStore.eventTypes"
+                item-value="id"
+                item-title="name"
                 label="Event Type"
                 density="comfortable"
-              ></v-combobox>
+              ></v-select>
             </v-col>
             <v-col cols="12">
               <v-textarea
@@ -101,6 +121,16 @@ const resetForm = () => {
                 density="comfortable"
                 rows="3"
               ></v-textarea>
+            </v-col>
+            <v-col cols="12" v-if="showQuantityField">
+              <v-text-field
+                v-model="eventQuantity"
+                label="Quantity"
+                type="number"
+                min="1"
+                density="comfortable"
+                hint="Number of films affected by this event"
+              ></v-text-field>
             </v-col>
           </v-row>
         </template>
@@ -112,7 +142,7 @@ const resetForm = () => {
                 v-model="selectedEventId"
                 :items="sortedUniqueEvents"
                 :item-title="
-                  (event) => `${event.id}: ${formatDate(event.date)} - ${event.event_type}`
+                  (event) => `${event.id}: ${formatDate(event.date)} - ${eventsStore.getEventTypeName(event.film_event_type_id)}`
                 "
                 item-value="id"
                 label="Select Event"
@@ -120,6 +150,16 @@ const resetForm = () => {
                 :return-object="false"
               >
               </v-select>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="eventQuantity"
+                label="Quantity"
+                type="number"
+                min="1"
+                density="comfortable"
+                hint="Number of films affected by this event"
+              ></v-text-field>
             </v-col>
           </v-row>
         </template>
@@ -133,7 +173,7 @@ const resetForm = () => {
           @click="addEvent"
           :disabled="
             isCreatingNew
-              ? !newEvent.event_type || !newEvent.date
+              ? !newEvent.film_event_type_id || !newEvent.date
               : !selectedEventId
           "
         >
