@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import FilmEventLogTable from "./FilmEventLogTable.vue";
-import { Event, FilmEntry } from "@/types/film-collection";
+import { Event, FilmEvent, FilmEntry } from "@/types/film-collection";
 import { useDateFormatting } from "@/composables/useDateFormatting";
 import { useEventsStore } from "@/stores/events";
+import { useCamerasStore } from "@/stores/cameras";
 import VueMarkdown from "vue-markdown-render";
 
 const eventsStore = useEventsStore();
+const camerasStore = useCamerasStore();
 
 const { formatDate } = useDateFormatting();
 import {
@@ -22,7 +24,7 @@ import AddEventToFilmDialog from "./AddEventToFilmDialog.vue";
 
 const props = defineProps<{
   films: FilmEntry[];
-  eventsByFilm: Record<number, Event[]>;
+  eventsByFilm: Record<number, FilmEvent[]>;
   search?: string;
 }>();
 
@@ -149,7 +151,7 @@ const handleEventAdd = (eventId: number, quantity?: number) => {
   }
 };
 
-const handleEventCreate = (event: Omit<Event, "id"> & { quantity?: number }) => {
+const handleEventCreate = (event: Omit<Event, "id" | "quantity"> & { quantity?: number }) => {
   if (selectedFilmForEvent.value) {
     emit("createAndAddEventToFilm", selectedFilmForEvent.value.id, event);
   }
@@ -410,6 +412,8 @@ const filteredFilms = computed(() => {
                   </div>
                   <FilmEventLogTable
                     :events="eventsByFilm[item.id] || []"
+                    :filmId="item.id"
+                    :cameras="camerasStore.cameras"
                     @remove-event="
                       (eventId) => emit('removeEventFromFilm', item.id, eventId)
                     "

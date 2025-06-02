@@ -66,7 +66,7 @@ export const getEventTypes = async (): Promise<FilmEventType[]> => {
     .returns<FilmEventType[]>();
 
   if (error) throw error;
-  console.log("Received event types:", data);
+
   return data;
 };
 
@@ -109,7 +109,7 @@ export const createFilmCollection = async (
     .single();
 
   if (error) {
-    console.error("Error creating film collection:", error);
+
     throw error;
   }
 
@@ -133,7 +133,7 @@ export const updateFilmCollection = async (
     .single();
 
   if (error) {
-    console.error("Error updating film collection:", error);
+
     throw error;
   }
 
@@ -158,13 +158,13 @@ export const deleteFilmCollection = async (id: number): Promise<void> => {
     .eq("id", id);
 
   if (error) {
-    console.error("Error deleting film collection:", error);
+
     throw error;
   }
 };
 
 export const getEvents = async (): Promise<FilmEvent[]> => {
-  console.log("Fetching events from database...");
+
   // First get all events
   const { data: events, error: eventsError } = await supabase
     .schema("film_collection")
@@ -172,11 +172,11 @@ export const getEvents = async (): Promise<FilmEvent[]> => {
     .select("*");
 
   if (eventsError) {
-    console.error("Error fetching events:", eventsError);
+
     throw eventsError;
   }
 
-  console.log("Received events from database:", events);
+
 
   // Then get all film-event associations with quantities
   const { data: filmAssociations, error: filmAssociationsError } = await supabase
@@ -185,11 +185,11 @@ export const getEvents = async (): Promise<FilmEvent[]> => {
     .select("*");
 
   if (filmAssociationsError) {
-    console.error("Error fetching film associations:", filmAssociationsError);
+
     throw filmAssociationsError;
   }
 
-  console.log("Received film associations:", filmAssociations);
+
 
   // Then get all event-camera associations
   const { data: cameraAssociations, error: cameraAssociationsError } = await supabase
@@ -198,15 +198,15 @@ export const getEvents = async (): Promise<FilmEvent[]> => {
     .select("*");
 
   if (cameraAssociationsError) {
-    console.error("Error fetching camera associations:", cameraAssociationsError);
+
     throw cameraAssociationsError;
   }
 
-  console.log("Received camera associations:", cameraAssociations);
+
 
   // Map the associations to the events
   const filmEvents = events.map((event) => {
-    console.log("Processing event:", event);
+
     return {
       ...event,
       date: new Date(event.date),
@@ -251,6 +251,16 @@ export const createFilmEvent = async (
   event: Omit<Event, "id">,
   quantity?: number,
 ): Promise<Event> => {
+  // Get the event type name
+  const { data: eventType, error: eventTypeError } = await supabase
+    .schema("film_collection")
+    .from("film_event_type")
+    .select("name")
+    .eq("id", event.film_event_type_id)
+    .single();
+
+  if (eventTypeError) throw eventTypeError;
+
   // Check if an identical "Acquired" event exists with matching date and location
   // Assuming 1 is the ID for "Acquired" event type
   const acquiredEventTypeId = 1;
@@ -278,6 +288,7 @@ export const createFilmEvent = async (
         {
           date: event.date,
           film_event_type_id: event.film_event_type_id,
+          event_type: eventType.name, // Add the event type name
           location: event.location,
           notes: event.notes,
         },
@@ -319,12 +330,23 @@ export const updateEvent = async (
   eventId: number,
   event: Omit<Event, "id">,
 ): Promise<void> => {
+  // Get the event type name
+  const { data: eventType, error: eventTypeError } = await supabase
+    .schema("film_collection")
+    .from("film_event_type")
+    .select("name")
+    .eq("id", event.film_event_type_id)
+    .single();
+
+  if (eventTypeError) throw eventTypeError;
+
   const { error } = await supabase
     .schema("film_collection")
     .from("film_events")
     .update({
       date: event.date,
       film_event_type_id: event.film_event_type_id,
+      event_type: eventType.name, // Add the event type name
       notes: event.notes,
     })
     .eq("id", eventId);
@@ -464,6 +486,16 @@ export const deleteEvent = async (eventId: number): Promise<void> => {
 export const createEventWithoutFilm = async (
   event: Omit<Event, "id">,
 ): Promise<Event> => {
+  // Get the event type name
+  const { data: eventType, error: eventTypeError } = await supabase
+    .schema("film_collection")
+    .from("film_event_type")
+    .select("name")
+    .eq("id", event.film_event_type_id)
+    .single();
+
+  if (eventTypeError) throw eventTypeError;
+
   const { data, error } = await supabase
     .schema("film_collection")
     .from("film_events")
@@ -471,6 +503,7 @@ export const createEventWithoutFilm = async (
       {
         date: event.date,
         film_event_type_id: event.film_event_type_id,
+        event_type: eventType.name, // Add the event type name
         location: event.location,
         notes: event.notes,
       },

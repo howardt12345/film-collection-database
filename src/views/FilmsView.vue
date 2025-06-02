@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useFilmsStore } from '@/stores/films';
 import { useEventsStore } from '@/stores/events';
+import { useCamerasStore } from '@/stores/cameras';
 import { useFilmEvents } from '@/composables/useFilmEvents';
 import { FilmEntry, Event } from '@/types/film-collection';
 import FilmEntryTable from '@/components/film-collection/film/FilmEntryTable.vue';
@@ -15,6 +16,7 @@ const props = defineProps<{
 
 const filmsStore = useFilmsStore();
 const eventsStore = useEventsStore();
+const camerasStore = useCamerasStore();
 const filmEvents = useFilmEvents();
 const route = useRoute();
 const router = useRouter();
@@ -82,6 +84,7 @@ onMounted(async () => {
   await Promise.all([
     eventsStore.fetchEvents(),
     filmsStore.fetchFilms(),
+    camerasStore.fetchCameras(),
   ]);
 
   // Sync film used quantities after loading data

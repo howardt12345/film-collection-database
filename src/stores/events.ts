@@ -82,23 +82,23 @@ export const useEventsStore = defineStore('events', {
       this.loading = true;
       this.error = null;
       try {
-        console.log("Events store: Fetching event types...");
+
         // Fetch event types first
         this.eventTypes = await getEventTypes();
-        console.log("Events store: Event types loaded:", this.eventTypes);
+
 
         // Then fetch events
-        console.log("Events store: Fetching events...");
+
         this.events = await getEvents();
-        console.log("Events store: Events loaded:", this.events);
+
 
         // Fetch film-event associations with quantities
-        console.log("Events store: Fetching film-event associations...");
+
         this.filmEventAssociations = await getFilmEventAssociations();
-        console.log("Events store: Film-event associations loaded:", this.filmEventAssociations);
+
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error fetching events:', error);
+
       } finally {
         this.loading = false;
       }
@@ -156,7 +156,7 @@ export const useEventsStore = defineStore('events', {
         return filmEvent;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error creating event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -182,7 +182,7 @@ export const useEventsStore = defineStore('events', {
         return this.events[index];
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error updating event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -206,7 +206,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error deleting event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -235,7 +235,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error adding film to event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -270,7 +270,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error removing film from event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -307,7 +307,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error updating films on event:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -329,7 +329,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error updating event cameras:', error);
+
         throw error;
       } finally {
         this.loading = false;
@@ -363,7 +363,7 @@ export const useEventsStore = defineStore('events', {
         return true;
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Unknown error occurred';
-        console.error('Error updating film event quantity:', error);
+
         throw error;
       } finally {
         this.loading = false;

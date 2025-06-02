@@ -45,14 +45,14 @@ const editingEventFilmIds = ref<number[]>([]);
 const editingEventCameraIds = ref<number[]>([]);
 
 const sortedEvents = computed(() => {
-  console.log("EventLogTable - Events received:", props.events);
-  console.log("EventLogTable - Event types in store:", eventsStore.eventTypes);
+
+
 
   return [...(props.events || [])]
     .map(event => {
-      console.log("EventLogTable - Processing event:", event);
+
       const eventTypeName = eventsStore.getEventTypeName(event.film_event_type_id);
-      console.log("EventLogTable - Event type name:", event.film_event_type_id, ":", eventTypeName);
+
 
       return {
         ...event,
