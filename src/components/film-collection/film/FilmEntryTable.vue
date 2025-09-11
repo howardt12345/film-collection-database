@@ -261,7 +261,10 @@ const filteredFilms = computed(() => {
           location="top"
         >
           <template v-slot:activator="{ props }">
-            <v-icon v-if="item.date_frozen && item.quantity - item.used > 0" color="primary" v-bind="props"
+            <v-icon
+              v-if="item.date_frozen && item.quantity - item.used > 0"
+              color="primary"
+              v-bind="props"
               >mdi-snowflake</v-icon
             >
           </template>

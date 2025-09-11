@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { supabase } from "@/api/supabase";
 import { Session } from "@supabase/supabase-js";
+import NotificationSystem from "@/components/shared/NotificationSystem.vue";
 
 const session = ref<Session | null>();
 
@@ -33,5 +34,6 @@ onMounted(() => {
       </v-container>
       <Auth v-else />
     </v-main>
+    <NotificationSystem />
   </v-app>
 </template>

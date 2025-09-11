@@ -55,7 +55,9 @@ const getAssociatedFilms = (eventId: number) => {
 const getAssociatedCameras = (eventId: number) => {
   const event = props.events?.find((e) => e.id === eventId);
   if (!event?.camera_ids) return [];
-  return props.cameras.filter((camera) => (event.camera_ids ?? []).includes(camera.id));
+  return props.cameras.filter((camera) =>
+    (event.camera_ids ?? []).includes(camera.id),
+  );
 };
 
 const openEditDialog = (event: FilmEvent) => {
@@ -88,7 +90,7 @@ const copyingEventCameraIds = ref<number[]>([]);
 
 const openCopyDialog = (event: FilmEvent) => {
   copyingEvent.value = {
-    ...event
+    ...event,
   };
   copyingEventFilmIds.value = event.film_ids || [];
   copyingEventCameraIds.value = event.camera_ids || [];
@@ -157,7 +159,13 @@ const handleEditSave = (
           size="small"
           :color="getFilmNameColor(film.name) || getBrandColor(film.brand)"
           style="cursor: pointer"
-          @click="$router.push({ query: { search: `${formatDate(film.date_acquired)} ${film.brand} ${film.name} ${film.film_format}` } })"
+          @click="
+            $router.push({
+              query: {
+                search: `${formatDate(film.date_acquired)} ${film.brand} ${film.name} ${film.film_format}`,
+              },
+            })
+          "
         >
           {{ formatDate(film.date_acquired) }}: {{ film.brand }} {{ film.name }}
         </v-chip>

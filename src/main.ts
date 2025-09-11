@@ -6,7 +6,7 @@
 
 // Plugins
 import { registerPlugins } from "@/plugins";
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from "vue-router";
 
 // Components
 import App from "./App.vue";
@@ -20,7 +20,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/',
+      path: "/",
       component: FilmCollection,
       props: (route) => ({
         search: route.query.search,

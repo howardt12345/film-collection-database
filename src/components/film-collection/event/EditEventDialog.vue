@@ -17,7 +17,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
-  (e: "save", event: Omit<Event, "id">, filmIds: number[], cameraIds: number[]): void;
+  (
+    e: "save",
+    event: Omit<Event, "id">,
+    filmIds: number[],
+    cameraIds: number[],
+  ): void;
 }>();
 
 const editingEvent = ref<Omit<Event, "id">>({
@@ -48,10 +53,15 @@ watch(
 );
 
 const saveEvent = () => {
-  emit("save", {
-    ...editingEvent.value,
-    date: new Date(editingEvent.value.date),
-  }, selectedFilmIds.value, selectedCameraIds.value);
+  emit(
+    "save",
+    {
+      ...editingEvent.value,
+      date: new Date(editingEvent.value.date),
+    },
+    selectedFilmIds.value,
+    selectedCameraIds.value,
+  );
   emit("update:modelValue", false);
 };
 </script>
@@ -63,15 +73,19 @@ const saveEvent = () => {
     max-width="500"
   >
     <v-card>
-      <v-card-title>{{ event ? 'Edit' : 'Create' }} Event</v-card-title>
+      <v-card-title>{{ event ? "Edit" : "Create" }} Event</v-card-title>
       <v-card-text>
         <v-row>
           <v-col cols="6">
             <v-text-field
-              :model-value="editingEvent.date instanceof Date
-                ? editingEvent.date.toISOString().split('T')[0]
-                : editingEvent.date"
-              @update:model-value="value => editingEvent.date = new Date(value)"
+              :model-value="
+                editingEvent.date instanceof Date
+                  ? editingEvent.date.toISOString().split('T')[0]
+                  : editingEvent.date
+              "
+              @update:model-value="
+                (value) => (editingEvent.date = new Date(value))
+              "
               label="Event Date"
               type="date"
               density="comfortable"
@@ -164,7 +178,9 @@ const saveEvent = () => {
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" @click="emit('update:modelValue', false)">Cancel</v-btn>
+        <v-btn color="secondary" @click="emit('update:modelValue', false)"
+          >Cancel</v-btn
+        >
         <v-btn
           color="primary"
           @click="saveEvent"

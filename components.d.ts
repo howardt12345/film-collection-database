@@ -21,9 +21,9 @@ declare module 'vue' {
     FilmEntryTable: typeof import('./src/components/film-collection/film/FilmEntryTable.vue')['default']
     FilmEventLogTable: typeof import('./src/components/film-collection/film/FilmEventLogTable.vue')['default']
     FilmForm: typeof import('./src/components/film-collection/film/FilmForm.vue')['default']
+    NotificationSystem: typeof import('./src/components/shared/NotificationSystem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UniqueFilms: typeof import('./src/components/film-collection/UniqueFilms.vue')['default']
-    UniqueFilmsTable: typeof import('./src/components/film-collection/UniqueFilmsTable.vue')['default']
   }
 }

@@ -18,7 +18,7 @@ export interface Event {
   event_type: string;
   location: string;
   notes: string;
-};
+}
 
 export interface FilmEvent extends Event {
   film_ids: number[];
@@ -48,7 +48,7 @@ export interface FilmEntry {
     event_type: string;
   };
   date_frozen?: Date;
-};
+}
 
 export interface Camera {
   id: number;

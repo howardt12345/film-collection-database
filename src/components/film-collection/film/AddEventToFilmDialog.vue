@@ -26,12 +26,13 @@ const newEvent = ref<Omit<Event, "id">>({
 });
 
 const sortedUniqueEvents = computed(() => {
-  const uniqueEvents = [...new Map(props.existingEvents.map(event => [event.id, event])).values()];
+  const uniqueEvents = [
+    ...new Map(props.existingEvents.map((event) => [event.id, event])).values(),
+  ];
   return uniqueEvents.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 });
-
 
 const addEvent = () => {
   if (isCreatingNew.value) {
@@ -112,7 +113,8 @@ const resetForm = () => {
                 v-model="selectedEventId"
                 :items="sortedUniqueEvents"
                 :item-title="
-                  (event) => `${event.id}: ${formatDate(event.date)} - ${event.event_type}`
+                  (event) =>
+                    `${event.id}: ${formatDate(event.date)} - ${event.event_type}`
                 "
                 item-value="id"
                 label="Select Event"

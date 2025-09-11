@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { Camera, FilmFormat } from "@/types/film-collection";
 import CameraForm from "./CameraForm.vue";
 
-const props = defineProps<{
+defineProps<{
   modelValue: boolean;
   uniqueBrands: string[];
 }>();
@@ -30,15 +30,16 @@ const newCamera = ref<Partial<Camera>>(defaultCamera);
     <v-card>
       <v-card-title>Add New Camera</v-card-title>
       <v-card-text>
-        <CameraForm
-          v-model:camera="newCamera"
-          :unique-brands="uniqueBrands"
-        />
+        <CameraForm v-model:camera="newCamera" :unique-brands="uniqueBrands" />
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="secondary" @click="emit('update:modelValue', false)">Cancel</v-btn>
-        <v-btn color="primary" @click="emit('create', newCamera as Camera)">Create</v-btn>
+        <v-btn color="secondary" @click="emit('update:modelValue', false)"
+          >Cancel</v-btn
+        >
+        <v-btn color="primary" @click="emit('create', newCamera as Camera)"
+          >Create</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>

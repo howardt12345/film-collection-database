@@ -52,7 +52,8 @@ const uniqueFilms = computed(() => {
     const availableDiff =
       b.totalQuantity - b.totalUsed - (a.totalQuantity - a.totalUsed);
     if (availableDiff !== 0) return availableDiff;
-    if (a.film_format !== b.film_format) return a.film_format.localeCompare(b.film_format);
+    if (a.film_format !== b.film_format)
+      return a.film_format.localeCompare(b.film_format);
     if (a.brand !== b.brand) return a.brand.localeCompare(b.brand);
     return a.name.localeCompare(b.name);
   });
@@ -67,15 +68,15 @@ const filmsByBrand = computed(() => {
         brand: film.brand,
         totalQuantity: film.quantity || 0,
         totalUsed: film.used || 0,
-        totalRareAcquired: film.rare ? (film.quantity || 0) : 0,
-        totalRareUsed: film.rare ? (film.used || 0) : 0,
+        totalRareAcquired: film.rare ? film.quantity || 0 : 0,
+        totalRareUsed: film.rare ? film.used || 0 : 0,
       });
     } else {
       const existing = brandMap.get(film.brand)!;
       existing.totalQuantity += film.quantity || 0;
       existing.totalUsed += film.used || 0;
-      existing.totalRareAcquired += film.rare ? (film.quantity || 0) : 0;
-      existing.totalRareUsed += film.rare ? (film.used || 0) : 0;
+      existing.totalRareAcquired += film.rare ? film.quantity || 0 : 0;
+      existing.totalRareUsed += film.rare ? film.used || 0 : 0;
     }
   });
 
@@ -160,12 +161,11 @@ const filteredUniqueFilms = computed(() => {
       `ISO ${film.iso}`.toLowerCase(),
     ];
 
-    return searchTerms.every(term =>
-      attributes.some(attribute => attribute.includes(term))
+    return searchTerms.every((term) =>
+      attributes.some((attribute) => attribute.includes(term)),
     );
   });
 });
-
 </script>
 
 <template>
@@ -181,7 +181,12 @@ const filteredUniqueFilms = computed(() => {
       </v-toolbar>
     </template>
     <template v-slot:item.brand="{ item }">
-      <v-chip size="small" :color="getBrandColor(item.brand)" style="cursor: pointer" @click="$router.push({ query: { search: item.brand } })">
+      <v-chip
+        size="small"
+        :color="getBrandColor(item.brand)"
+        style="cursor: pointer"
+        @click="$router.push({ query: { search: item.brand } })"
+      >
         {{ item.brand }}
       </v-chip>
     </template>
@@ -230,13 +235,23 @@ const filteredUniqueFilms = computed(() => {
       </v-toolbar>
     </template>
     <template v-slot:item.brand="{ item }">
-      <v-chip size="small" :color="getBrandColor(item.brand)" style="cursor: pointer" @click="$router.push({ query: { search: item.brand } })">
+      <v-chip
+        size="small"
+        :color="getBrandColor(item.brand)"
+        style="cursor: pointer"
+        @click="$router.push({ query: { search: item.brand } })"
+      >
         {{ item.brand }}
       </v-chip>
     </template>
 
     <template v-slot:item.name="{ item }">
-      <v-chip size="small" :color="getFilmNameColor(item.name)" style="cursor: pointer" @click="$router.push({ query: { search: item.name } })">
+      <v-chip
+        size="small"
+        :color="getFilmNameColor(item.name)"
+        style="cursor: pointer"
+        @click="$router.push({ query: { search: item.name } })"
+      >
         {{ item.name }}
       </v-chip>
     </template>
